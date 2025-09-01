@@ -1,18 +1,34 @@
 import { defineConfig, splitVendorChunkPlugin } from 'vite'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
+import path from 'path'
 
-export default defineConfig({
-  plugins: [
-    react(),
-    splitVendorChunkPlugin(),
-    visualizer({
-      open: false,
-      filename: 'dist/stats.html',
-      gzipSize: true,
-      brotliSize: true,
-    })
-  ],
+export default defineConfig(({ command, mode }) => {
+  const isProduction = mode === 'production'
+  
+  return {
+    plugins: [
+      react(),
+      splitVendorChunkPlugin(),
+      isProduction && visualizer({
+        open: false,
+        filename: 'dist/stats.html',
+        gzipSize: true,
+        brotliSize: true,
+        template: 'treemap'
+      })
+    ].filter(Boolean),
+    
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, './src'),
+        '@components': path.resolve(__dirname, './src/components'),
+        '@pages': path.resolve(__dirname, './src/pages'),
+        '@utils': path.resolve(__dirname, './src/utils'),
+        '@services': path.resolve(__dirname, './src/services'),
+        '@hooks': path.resolve(__dirname, './src/hooks'),
+      },
+    },
   server: {
     host: '0.0.0.0',
     port: 5173,
@@ -30,39 +46,49 @@ export default defineConfig({
       },
     }
   },
-  build: {
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          // Core React libraries
-          'react-vendor': ['react', 'react-dom', 'react-router-dom'],
-          // UI libraries
-          'ui-vendor': ['framer-motion', 'lucide-react', '@headlessui/react'],
-          // Data management
-          'data-vendor': ['@tanstack/react-query', 'axios', 'dexie'],
-          // Charts and visualization
-          'charts': ['recharts'],
-          // Admin components (lazy loaded)
-          'admin': [
-            './src/pages/AdminDashboard.jsx',
-            './src/pages/AdminUsersPage.jsx',
-            './src/pages/AdminCoursesPage.jsx',
-            './src/pages/AIUsagePage.jsx'
-          ],
+    build: {
+      target: 'esnext',
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            // Core React libraries
+            'react-vendor': ['react', 'react-dom', 'react-router-dom'],
+            // UI libraries  
+            'ui-vendor': ['framer-motion', 'clsx', 'react-hook-form'],
+            // Data management
+            'data-vendor': ['@tanstack/react-query', 'axios', 'dexie', 'zustand'],
+            // Charts and visualization
+            'charts': ['recharts'],
+            // Internationalization
+            'i18n': ['i18next', 'react-i18next'],
+            // Date utilities
+            'date': ['date-fns'],
+            // Notifications
+            'notifications': ['react-hot-toast'],
+          },
         },
       },
+      chunkSizeWarningLimit: 1000,
+      sourcemap: !isProduction,
+      minify: isProduction ? 'terser' : false,
+      terserOptions: isProduction ? {
+        compress: {
+          drop_console: true,
+          drop_debugger: true,
+        },
+        mangle: {
+          safari10: true,
+        },
+      } : {},
     },
-    chunkSizeWarningLimit: 1000,
-    sourcemap: true,
-    minify: 'terser',
-    terserOptions: {
-      compress: {
-        drop_console: true,
-        drop_debugger: true,
-      },
+    
+    optimizeDeps: {
+      include: ['react', 'react-dom', 'react-router-dom', '@tanstack/react-query'],
     },
-  },
-  optimizeDeps: {
-    include: ['react', 'react-dom', 'react-router-dom'],
-  },
+    
+    define: {
+      __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
+      __VERSION__: JSON.stringify(process.env.npm_package_version || '1.0.0'),
+    },
+  }
 })
