@@ -157,6 +157,11 @@ CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = TIME_ZONE
 
+# AI Configuration
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
+AI_MAX_TOKENS_PER_USER_PER_DAY = config('AI_MAX_TOKENS_PER_USER_PER_DAY', default=10000, cast=int)
+AI_RATE_LIMIT_PER_HOUR = config('AI_RATE_LIMIT_PER_HOUR', default=20, cast=int)
+
 # Email Configuration (for OTP)
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'  # Development
 EMAIL_HOST = config('EMAIL_HOST', default='localhost')
