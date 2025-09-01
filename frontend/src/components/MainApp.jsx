@@ -9,6 +9,13 @@ import MissionPage from '../pages/MissionPage'
 import MoodPage from '../pages/MoodPage'
 import ReportsPage from '../pages/ReportsPage'
 import ProgressPage from '../pages/ProgressPage'
+import AdminLayout from '../pages/admin/AdminLayout'
+import AdminDashboard from '../pages/admin/AdminDashboard'
+import CoursesPage from '../pages/admin/CoursesPage'
+import UsersPage from '../pages/admin/UsersPage'
+import EnrollmentsPage from '../pages/admin/EnrollmentsPage'
+import ResourcesPage from '../pages/admin/ResourcesPage'
+import AIUsagePage from '../pages/admin/AIUsagePage'
 
 // Navigation Component
 function AppNavigation() {
@@ -23,6 +30,10 @@ function AppNavigation() {
     { path: '/mood', icon: '😊', label: 'Mood' },
     { path: '/settings', icon: '⚙️', label: 'Settings' },
   ]
+
+  if (user?.is_staff) {
+    navItems.push({ path: '/studio', icon: '🔧', label: 'Admin' })
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-purple-100 z-50">
@@ -97,6 +108,16 @@ export default function MainApp() {
         <Route path="/mood" element={<MoodPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        {user?.is_staff && (
+          <Route path="/studio/*" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="courses" element={<CoursesPage />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="enrollments" element={<EnrollmentsPage />} />
+            <Route path="resources" element={<ResourcesPage />} />
+            <Route path="ai-usage" element={<AIUsagePage />} />
+          </Route>
+        )}
       </Routes>
       <AppNavigation />
     </div>

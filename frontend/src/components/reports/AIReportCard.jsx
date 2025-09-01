@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { api } from '../../lib/api';
+import api from '../../lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Badge } from '../ui/badge';
-import { toast } from 'sonner';
+import { toast } from '../../utils/toast';
 
 export function AIReportCard({ type = 'progress' }) {
   const [report, setReport] = useState(null);

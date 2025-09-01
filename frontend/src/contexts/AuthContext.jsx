@@ -3,14 +3,16 @@ import { initializeAnalytics } from '../utils/analytics'
 
 const AuthContext = createContext()
 
-// Hardcoded demo user
+// Hardcoded demo user (configured as admin)
 const DEMO_USER = {
   id: 1,
-  email: 'demo@eurekia.com',
-  name: 'Demo Hero',
-  avatar_icon: '🦸',
-  avatar_color: 'bg-gradient-to-r from-purple-500 to-pink-500',
+  email: 'admin@eurekia.com',
+  name: 'Admin User',
+  avatar_icon: '🔧',
+  avatar_color: '#0ea5e9',
   is_active: true,
+  is_staff: true,
+  is_superuser: true,
   created_at: new Date().toISOString(),
   onboarding_completed: true,
   habits_count: 3,
@@ -71,13 +73,16 @@ export function AuthProvider({ children }) {
       // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000))
       
-      // Always succeed with demo user
+      // Create user based on email - admin users keep admin privileges
+      const isAdmin = email === 'admin@eurekia.com'
       const user = {
         ...DEMO_USER,
         email: email || DEMO_USER.email,
         name: name || DEMO_USER.name,
-        avatar_icon: '',  // Will be set during onboarding
-        onboarding_completed: false
+        avatar_icon: isAdmin ? '🔧' : '',  // Admin keeps icon, others set during onboarding
+        onboarding_completed: isAdmin ? true : false,  // Admin skips onboarding
+        is_staff: isAdmin ? true : false,
+        is_superuser: isAdmin ? true : false
       }
       
       const token = 'demo_token_' + Date.now()
@@ -123,9 +128,14 @@ export function AuthProvider({ children }) {
       
       // Accept any 6-digit code
       if (code && code.length === 6) {
+        const isAdmin = email === 'admin@eurekia.com'
         const user = {
           ...DEMO_USER,
-          email: email || DEMO_USER.email
+          email: email || DEMO_USER.email,
+          avatar_icon: isAdmin ? '🔧' : '🦸',
+          onboarding_completed: isAdmin ? true : true, // Both demo users complete onboarding
+          is_staff: isAdmin ? true : false,
+          is_superuser: isAdmin ? true : false
         }
         
         const token = 'demo_token_' + Date.now()

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import toast from 'react-hot-toast'
+import { toast } from '../../utils/toast'
 
 export default function OTPForm({ initialEmail, onBack }) {
   const [email, setEmail] = useState(initialEmail || '')

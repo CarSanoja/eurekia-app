@@ -36,12 +36,22 @@ export function SettingsPage() {
                 <span className="text-3xl">{user?.avatar_icon || '🦸'}</span>
                 Hero Profile
               </span>
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors text-sm"
-              >
-                Logout
-              </button>
+              <div className="flex items-center gap-2">
+                {user?.is_staff && (
+                  <button
+                    onClick={() => navigate('/studio')}
+                    className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-xl font-medium transition-colors text-sm flex items-center gap-1"
+                  >
+                    🔧 Admin Studio
+                  </button>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors text-sm"
+                >
+                  Logout
+                </button>
+              </div>
             </CardTitle>
             <CardDescription>
               Your hero identity and journey details

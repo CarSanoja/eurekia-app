@@ -91,12 +91,14 @@ export default function DashboardPage() {
             <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 border border-white/30">
               <span className="text-white font-bold">⚡ {t('dashboard.level')}</span>
             </div>
-            <Link
-              to="/studio"
-              className="text-sm text-white/80 hover:text-white font-medium bg-white/10 px-3 py-2 rounded-full"
-            >
-              {t('dashboard.admin')}
-            </Link>
+            {user?.is_staff && (
+              <Link
+                to="/studio"
+                className="text-sm text-white font-medium bg-blue-500/80 hover:bg-blue-600 px-4 py-2 rounded-full transition-colors flex items-center gap-1"
+              >
+                🔧 Admin Studio
+              </Link>
+            )}
             <button
               onClick={logout}
               className="text-sm text-white/80 hover:text-white bg-white/10 px-3 py-2 rounded-full"
@@ -153,7 +155,7 @@ export default function DashboardPage() {
             <h3 className="text-2xl font-bold text-gray-800 mb-6 flex items-center">
               ⚡ Power-Ups <span className="text-lg ml-2">(Choose your next action!)</span>
             </h3>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className={`grid gap-6 ${user?.is_staff ? 'md:grid-cols-2 lg:grid-cols-5' : 'md:grid-cols-2 lg:grid-cols-4'}`}>
               <button 
                 onClick={() => setShowQuestCreator(true)}
                 className="bg-gradient-to-br from-green-400 to-green-600 rounded-2xl p-6 shadow-lg border-0 text-white hover:scale-105 transform transition-all duration-200 hover:shadow-xl"
@@ -196,6 +198,21 @@ export default function DashboardPage() {
                   <p className="text-sm text-white/90 mt-2">See your epic growth!</p>
                 </div>
               </button>
+
+              {user?.is_staff && (
+                <Link 
+                  to="/studio"
+                  className="bg-gradient-to-br from-slate-500 to-slate-700 rounded-2xl p-6 shadow-lg border-0 text-white hover:scale-105 transform transition-all duration-200 hover:shadow-xl block"
+                >
+                  <div className="text-center">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center border-2 border-white/30">
+                      <span className="text-3xl">🔧</span>
+                    </div>
+                    <h3 className="font-bold text-lg">Admin Studio</h3>
+                    <p className="text-sm text-white/90 mt-2">Manage your platform!</p>
+                  </div>
+                </Link>
+              )}
             </div>
           </div>
 

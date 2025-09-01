@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext'
 import WelcomeScreen from '../components/onboarding/WelcomeScreen'
 import AvatarSelector from '../components/onboarding/AvatarSelector'
 import MissionSetup from '../components/onboarding/MissionSetup'
-import toast from 'react-hot-toast'
+import { toast } from '../utils/toast'
 
 export default function OnboardingPage({ onComplete }) {
   const { user, token } = useAuth()
@@ -31,22 +31,53 @@ export default function OnboardingPage({ onComplete }) {
   const handleComplete = async () => {
     setLoading(true)
     try {
+      // Get token from localStorage as fallback
+      const authToken = token || localStorage.getItem('eurekia_token')
+      
+      console.log('Token from context:', token ? 'Present' : 'Missing')
+      console.log('Token from localStorage:', localStorage.getItem('eurekia_token') ? 'Present' : 'Missing')
+      console.log('Using token:', authToken ? 'Yes' : 'No')
+      
+      if (!authToken) {
+        throw new Error('No authentication token available')
+      }
+
       // Update user profile with avatar
       if (selectedAvatar) {
+        // First get current user data
+        const currentUserResponse = await fetch(`${import.meta.env.VITE_API_URL}/users/me/`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        if (!currentUserResponse.ok) {
+          throw new Error(`Failed to get user profile: ${currentUserResponse.status}`)
+        }
+        
+        const currentUser = await currentUserResponse.json()
+        console.log('Current user data:', currentUser)
+        
+        // Update with avatar keeping existing data
         const profileResponse = await fetch(`${import.meta.env.VITE_API_URL}/users/me/`, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${authToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
+            ...currentUser,
             avatar_icon: selectedAvatar.icon,
             avatar_color: selectedAvatar.color
           })
         })
         
         if (!profileResponse.ok) {
-          throw new Error('Failed to update profile')
+          const errorData = await profileResponse.json().catch(() => ({}))
+          console.error('Profile update failed:', profileResponse.status, errorData)
+          throw new Error(`Failed to update profile: ${profileResponse.status} - ${errorData.detail || 'Unknown error'}`)
         }
       }
 
@@ -55,14 +86,16 @@ export default function OnboardingPage({ onComplete }) {
         const missionResponse = await fetch(`${import.meta.env.VITE_API_URL}/mission/`, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${authToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(mission)
         })
         
         if (!missionResponse.ok) {
-          throw new Error('Failed to save mission')
+          const errorData = await missionResponse.json().catch(() => ({}))
+          console.error('Mission save failed:', missionResponse.status, errorData)
+          throw new Error(`Failed to save mission: ${missionResponse.status} - ${errorData.detail || 'Unknown error'}`)
         }
       }
 
@@ -70,7 +103,13 @@ export default function OnboardingPage({ onComplete }) {
       onComplete()
     } catch (error) {
       console.error('Onboarding error:', error)
-      toast.error('Something went wrong. Let\'s try that again!')
+      if (error.message.includes('401')) {
+        toast.error('Authentication expired. Please refresh and try again!')
+      } else if (error.message.includes('No authentication token')) {
+        toast.error('Please log in again to continue!')
+      } else {
+        toast.error(`Error: ${error.message}`)
+      }
     } finally {
       setLoading(false)
     }
