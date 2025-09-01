@@ -34,10 +34,8 @@ if DATABASE_URL:
     DATABASES = {
         'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
     }
-    # Ensure pgvector extension
-    DATABASES['default']['OPTIONS'] = {
-        'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-    }
+    # PostgreSQL-specific options
+    DATABASES['default']['OPTIONS'] = {}
 else:
     DATABASES = {
         'default': {
