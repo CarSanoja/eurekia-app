@@ -12,8 +12,8 @@ import {
   checkInsuranceMilestones,
   showComebackCelebration,
   showFirstCompletionCelebration 
-} from '../utils/streakNotifications'
-import { useAnalytics } from '../hooks/useAnalytics'
+} from '../utils/streakNotifications.jsx'
+import { useAnalytics } from '../hooks/useAnalytics.jsx'
 
 // Habit Card Component
 function HabitCard({ habit, onCheckin, onHabitUpdate }) {

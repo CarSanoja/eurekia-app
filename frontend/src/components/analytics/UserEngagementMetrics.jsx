@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useAnalytics } from '../../hooks/useAnalytics';
+import { useAnalytics } from '../../hooks/useAnalytics.jsx';
 
 const UserEngagementMetrics = ({ showDetailed = false }) => {
   const [metrics, setMetrics] = useState(null);
