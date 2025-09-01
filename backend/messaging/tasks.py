@@ -1,5 +1,7 @@
 from celery import shared_task
 from django.utils import timezone
+from django.core.mail import EmailMultiAlternatives
+from django.conf import settings
 from datetime import datetime, timedelta
 import logging
 
@@ -7,6 +9,8 @@ from accounts.models import User, ChannelPreference
 from habits.models import Habit, Checkin
 from messaging.models import OutboundMessage
 from messaging.email_service import EmailService
+from messaging.aha_moments import AhaMoments, AhaMomentScheduler
+from messaging.email_templates import EmailTemplates
 
 logger = logging.getLogger(__name__)
 
@@ -305,3 +309,244 @@ def cleanup_old_messages():
         
     except Exception as e:
         logger.error(f"Error in cleanup_old_messages task: {str(e)}")
+
+
+@shared_task(bind=True, max_retries=3)
+def send_aha_moment_email(self, user_id, moment_key, context=None):
+    """
+    Send an aha moment email to a user using advanced templates
+    
+    Args:
+        user_id: UUID string of the user
+        moment_key: Key identifying which aha moment to send
+        context: Additional context data for personalization
+    """
+    try:
+        # Get user and moment
+        user = User.objects.get(id=user_id)
+        moment = AhaMoments.get_moment_by_key(moment_key)
+        
+        if not moment:
+            logger.error(f"Unknown aha moment: {moment_key}")
+            return False
+        
+        # Check if user has opted out or is inactive
+        if not user.is_active:
+            logger.info(f"Skipping email to inactive user: {user.email}")
+            return False
+        
+        # Generate personalized email content
+        html_content = get_personalized_email_content(user, moment_key, context or {})
+        if not html_content:
+            logger.error(f"Failed to generate email content for {moment_key}")
+            return False
+        
+        # Extract subject from moment definition
+        subject = moment.get('subject', f'Message from Quanta')
+        
+        # Create plain text version (simplified)
+        text_content = create_text_version(html_content)
+        
+        # Create and send email with tracking
+        success = send_email_with_analytics(
+            user=user,
+            subject=subject,
+            html_content=html_content,
+            text_content=text_content,
+            template_key=moment_key,
+            context=context or {}
+        )
+        
+        if success:
+            logger.info(f"Successfully sent {moment_key} email to {user.email}")
+        else:
+            logger.error(f"Failed to send {moment_key} email to {user.email}")
+            
+        return success
+        
+    except User.DoesNotExist:
+        logger.error(f"User not found: {user_id}")
+        return False
+        
+    except Exception as exc:
+        logger.error(f"Error sending aha moment email: {str(exc)}")
+        
+        # Retry logic
+        if self.request.retries < self.max_retries:
+            logger.info(f"Retrying {moment_key} email for user {user_id} (attempt {self.request.retries + 1})")
+            raise self.retry(countdown=60 * (self.request.retries + 1), exc=exc)
+        
+        return False
+
+
+def get_personalized_email_content(user, moment_key, context):
+    """Generate personalized email content using advanced templates"""
+    try:
+        # Add user info to context
+        personalized_context = {
+            'user_name': user.name or 'Hero',
+            'user_email': user.email,
+            **context
+        }
+        
+        # Get template based on moment key
+        if moment_key == 'welcome_hero':
+            return EmailTemplates.welcome_hero(
+                user_name=personalized_context['user_name'],
+                context=personalized_context
+            )
+        elif moment_key == 'first_habit_created':
+            return EmailTemplates.first_habit_created(
+                user_name=personalized_context['user_name'],
+                habit_title=personalized_context.get('habit_title', 'Your Habit'),
+                context=personalized_context
+            )
+        elif moment_key == 'first_week_milestone':
+            return EmailTemplates.first_week_milestone(
+                user_name=personalized_context['user_name'],
+                habit_title=personalized_context.get('habit_title', 'Your Habit'),
+                streak_days=personalized_context.get('streak_days', 7),
+                context=personalized_context
+            )
+        elif moment_key == 'streak_recovery':
+            return EmailTemplates.streak_recovery(
+                user_name=personalized_context['user_name'],
+                habit_title=personalized_context.get('habit_title', 'Your Habit'),
+                broken_streak=personalized_context.get('broken_streak', 7),
+                context=personalized_context
+            )
+        elif moment_key == 'badge_unlock':
+            return EmailTemplates.badge_unlock(
+                user_name=personalized_context['user_name'],
+                badge_name=personalized_context.get('badge_name', 'Achievement'),
+                badge_type=personalized_context.get('badge_type', 'foundation'),
+                context=personalized_context
+            )
+        else:
+            # Use generic welcome template for unknown moment keys
+            return EmailTemplates.welcome_hero(
+                user_name=personalized_context['user_name'],
+                context=personalized_context
+            )
+            
+    except Exception as e:
+        logger.error(f"Error generating personalized content for {moment_key}: {str(e)}")
+        return None
+
+
+def create_text_version(html_content):
+    """Create plain text version from HTML content"""
+    try:
+        # Simple HTML to text conversion
+        import re
+        
+        # Remove HTML tags
+        text = re.sub(r'<[^>]+>', '', html_content)
+        
+        # Clean up whitespace
+        text = re.sub(r'\s+', ' ', text)
+        text = text.strip()
+        
+        # Add some basic formatting
+        text = text.replace('🚀', '🚀\n\n')
+        text = text.replace('🎯', '🎯 ')
+        text = text.replace('💪', '💪 ')
+        
+        return text[:2000] + '...' if len(text) > 2000 else text
+        
+    except Exception as e:
+        logger.error(f"Error creating text version: {str(e)}")
+        return "Please view this email in an HTML-capable email client."
+
+
+def send_email_with_analytics(user, subject, html_content, text_content, template_key, context):
+    """Send email with analytics tracking"""
+    try:
+        # Create outbound message record
+        outbound_message = OutboundMessage.objects.create(
+            user=user,
+            channel='email',
+            template_key=template_key,
+            payload_json=context,
+            status='queued'
+        )
+        
+        # Create email
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body=text_content,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[user.email],
+        )
+        email.attach_alternative(html_content, "text/html")
+        
+        # Send email
+        result = email.send()
+        
+        if result:
+            # Update message status
+            outbound_message.status = 'sent'
+            outbound_message.sent_at = timezone.now()
+            outbound_message.save()
+            
+            logger.info(f"Email sent successfully: {template_key} to {user.email}")
+            return True
+        else:
+            outbound_message.status = 'failed'
+            outbound_message.error_message = 'Email send failed'
+            outbound_message.save()
+            
+            logger.error(f"Email send failed: {template_key} to {user.email}")
+            return False
+            
+    except Exception as e:
+        logger.error(f"Error sending email with analytics: {str(e)}")
+        return False
+
+
+@shared_task
+def check_and_trigger_aha_moments():
+    """Check for users who should receive aha moment emails"""
+    try:
+        # Check for inactive users (re-engagement)
+        AhaMomentScheduler.check_inactive_users()
+        
+        # Check for other aha moment triggers
+        users = User.objects.filter(is_active=True)
+        
+        for user in users:
+            # Check for monthly report trigger (first of the month)
+            if timezone.now().day == 1:
+                AhaMomentScheduler.trigger_monthly_report(user)
+        
+        logger.info("Completed aha moments check")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error checking aha moments: {str(e)}")
+        return False
+
+
+@shared_task
+def test_email_system():
+    """Test the email system with a sample user"""
+    try:
+        # Get a test user (admin or first user)
+        user = User.objects.filter(is_active=True).first()
+        if not user:
+            logger.error("No active users found for testing")
+            return False
+        
+        # Send a test welcome email
+        success = send_aha_moment_email.delay(
+            str(user.id),
+            'welcome_hero',
+            {'test_mode': True}
+        )
+        
+        logger.info(f"Test email queued for {user.email}")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Error in test email system: {str(e)}")
+        return False
