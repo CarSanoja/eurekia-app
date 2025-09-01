@@ -8,6 +8,7 @@ import HabitsPage from '../pages/HabitsPage'
 import MissionPage from '../pages/MissionPage'
 import MoodPage from '../pages/MoodPage'
 import ReportsPage from '../pages/ReportsPage'
+import ProgressPage from '../pages/ProgressPage'
 
 // Navigation Component
 function AppNavigation() {
@@ -18,8 +19,8 @@ function AppNavigation() {
   const navItems = [
     { path: '/', icon: '🏠', label: 'Home' },
     { path: '/habits', icon: '🎯', label: 'Quests' },
+    { path: '/progress', icon: '📈', label: 'Progress' },
     { path: '/mood', icon: '😊', label: 'Mood' },
-    { path: '/reports', icon: '📊', label: 'Stats' },
     { path: '/settings', icon: '⚙️', label: 'Settings' },
   ]
 
@@ -91,6 +92,7 @@ export default function MainApp() {
       <Routes>
         <Route path="/" element={<DashboardPage />} />
         <Route path="/habits" element={<HabitsPage />} />
+        <Route path="/progress" element={<ProgressPage />} />
         <Route path="/mission" element={<MissionPage />} />
         <Route path="/mood" element={<MoodPage />} />
         <Route path="/reports" element={<ReportsPage />} />

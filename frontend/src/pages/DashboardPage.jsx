@@ -1,33 +1,60 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '../contexts/AuthContext'
 import { Link } from 'react-router-dom'
 import HabitQuestCreator from '../components/habits/HabitQuestCreator'
+import BadgeCollection from '../components/badges/BadgeCollection'
+import badgeService from '../services/badgeService.jsx'
 
 export default function DashboardPage() {
+  const { t } = useTranslation()
   const { user, logout, token } = useAuth()
   const [showQuestCreator, setShowQuestCreator] = useState(false)
   const [habits, setHabits] = useState([])
+  const [badges, setBadges] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchHabits()
+    fetchBadges()
   }, [])
+
+  const fetchBadges = async () => {
+    try {
+      const badgeData = await badgeService.fetchUserBadges()
+      setBadges(badgeData.badges)
+    } catch (error) {
+      console.error('Failed to load badges:', error)
+    }
+  }
 
   const fetchHabits = async () => {
     try {
+      const authToken = token || localStorage.getItem('eurekia_token')
+      
+      if (!authToken) {
+        console.error('No auth token available for fetching habits')
+        setHabits([])
+        return
+      }
+      
       const response = await fetch(`${import.meta.env.VITE_API_URL}/habits/`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${authToken}`,
           'Content-Type': 'application/json'
         }
       })
       
       if (response.ok) {
         const data = await response.json()
-        setHabits(data)
+        setHabits(Array.isArray(data) ? data : [])
+      } else {
+        console.error('Failed to fetch habits:', response.status)
+        setHabits([])
       }
     } catch (error) {
       console.error('Error fetching habits:', error)
+      setHabits([])
     } finally {
       setLoading(false)
     }
@@ -51,29 +78,29 @@ export default function DashboardPage() {
             </div>
             <div>
               <h1 className="text-2xl font-bold text-white drop-shadow-lg">
-                Hey {user?.name}! 🎉
+                {t('dashboard.greeting', { name: user?.name })}
               </h1>
               <p className="text-white/90 font-medium">
-                Ready to level up your life?
+                {t('dashboard.subtitle')}
               </p>
             </div>
           </div>
           
           <div className="flex items-center space-x-3">
             <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 border border-white/30">
-              <span className="text-white font-bold">⚡ Level 1</span>
+              <span className="text-white font-bold">⚡ {t('dashboard.level')}</span>
             </div>
             <Link
               to="/studio"
               className="text-sm text-white/80 hover:text-white font-medium bg-white/10 px-3 py-2 rounded-full"
             >
-              Admin
+              {t('dashboard.admin')}
             </Link>
             <button
               onClick={logout}
               className="text-sm text-white/80 hover:text-white bg-white/10 px-3 py-2 rounded-full"
             >
-              Logout
+              {t('auth.logout')}
             </button>
           </div>
         </div>
@@ -89,10 +116,10 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between mb-6">
                 <div>
                   <h2 className="text-3xl font-bold mb-2 animate-pulse">
-                    🚀 Your Quest Dashboard
+                    {t('dashboard.questDashboard')}
                   </h2>
                   <p className="text-white/90 text-lg">
-                    Level up by completing daily quests and building epic habits!
+                    {t('dashboard.questDescription')}
                   </p>
                 </div>
                 <div className="text-6xl animate-bounce">
@@ -104,17 +131,17 @@ export default function DashboardPage() {
                 <div className="text-center bg-white/20 backdrop-blur-sm rounded-2xl p-6 border border-white/30 hover:scale-105 transition-transform duration-200">
                   <div className="text-3xl mb-2">💪</div>
                   <div className="text-3xl font-bold">{habits.length}</div>
-                  <div className="text-sm text-white/80 font-medium">Active Quests</div>
+                  <div className="text-sm text-white/80 font-medium">{t('dashboard.activeQuests')}</div>
                 </div>
                 <div className="text-center bg-white/20 backdrop-blur-sm rounded-2xl p-6 border border-white/30 hover:scale-105 transition-transform duration-200">
                   <div className="text-3xl mb-2">⭐</div>
-                  <div className="text-3xl font-bold">{habits.length * 15}</div>
-                  <div className="text-sm text-white/80 font-medium">XP Earned</div>
+                  <div className="text-3xl font-bold">{(habits?.length || 0) * 15}</div>
+                  <div className="text-sm text-white/80 font-medium">{t('dashboard.xpEarned')}</div>
                 </div>
                 <div className="text-center bg-white/20 backdrop-blur-sm rounded-2xl p-6 border border-white/30 hover:scale-105 transition-transform duration-200">
                   <div className="text-3xl mb-2">🔥</div>
-                  <div className="text-3xl font-bold">{Math.max(...habits.map(h => h.current_streak || 0), 0)}</div>
-                  <div className="text-sm text-white/80 font-medium">Day Streak</div>
+                  <div className="text-3xl font-bold">{Math.max(...(habits?.map(h => h.current_streak || 0) || [0]))}</div>
+                  <div className="text-sm text-white/80 font-medium">{t('dashboard.dayStreak')}</div>
                 </div>
               </div>
             </div>
@@ -206,7 +233,7 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <div className="grid gap-4">
-                  {habits.map((habit) => (
+                  {(habits || []).map((habit) => (
                     <div key={habit.id} className="bg-white rounded-2xl p-6 shadow-lg border-2 border-indigo-100 hover:border-indigo-300 transition-all duration-200">
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
@@ -229,6 +256,23 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Badge Collection */}
+          <div className="bg-gradient-to-br from-yellow-50 to-orange-50 rounded-3xl shadow-lg border-2 border-yellow-100">
+            <div className="p-6">
+              <BadgeCollection badges={badges.slice(0, 6)} />
+              {badges.length > 6 && (
+                <div className="text-center mt-4">
+                  <Link 
+                    to="/progress?view=badges"
+                    className="text-purple-600 hover:text-purple-700 font-medium flex items-center justify-center gap-2"
+                  >
+                    View All Badges ({badges.length}) →
+                  </Link>
                 </div>
               )}
             </div>
