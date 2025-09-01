@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     'django_extensions',
     'drf_spectacular',
     'django_filters',
+    'channels',
+    'daphne',
     
     # Local apps
     'core',
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     'messaging',
     'admin_studio',
     'analytics',
+    'realtime',
 ]
 
 MIDDLEWARE = [
@@ -225,8 +228,28 @@ CACHES = {
     }
 }
 
-# AI Configuration (disabled for now)
-# GOOGLE_API_KEY = config('GOOGLE_API_KEY', default='')
+# Channels Configuration
+ASGI_APPLICATION = 'quanta.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            "hosts": [(config('REDIS_HOST', default='redis'), config('REDIS_PORT', default=6379, cast=int))],
+        },
+    },
+}
+
+# Email Configuration
+EMAIL_BACKEND = config('EMAIL_BACKEND', default='django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='quantalabsllc@gmail.com')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='ndhnnlamyacspths')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='Quanta <noreply@quanta.com>')
+
+# AI Configuration
+GEMINI_API_KEY = config('GEMINI_API_KEY', default='')
 
 # Messaging Configuration (disabled for now)
 # TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
