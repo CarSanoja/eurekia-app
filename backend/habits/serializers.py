@@ -18,18 +18,43 @@ class VisionSerializer(serializers.ModelSerializer):
 
 class HabitSerializer(serializers.ModelSerializer):
     current_streak = serializers.SerializerMethodField()
+    streak_stats = serializers.SerializerMethodField()
+    insurance_available = serializers.SerializerMethodField()
+    can_use_insurance = serializers.SerializerMethodField()
+    comeback_status = serializers.SerializerMethodField()
+    motivational_message = serializers.SerializerMethodField()
     
     class Meta:
         model = Habit
         fields = [
             'id', 'title', 'cadence', 'difficulty_level', 'anchor', 
             'micro_habit', 'is_active', 'order', 'current_streak',
+            'streak_stats', 'insurance_available', 'can_use_insurance',
+            'comeback_status', 'motivational_message', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'current_streak', 'streak_stats', 'insurance_available', 
+            'can_use_insurance', 'comeback_status', 'motivational_message',
             'created_at', 'updated_at'
         ]
-        read_only_fields = ['id', 'current_streak', 'created_at', 'updated_at']
     
     def get_current_streak(self, obj):
         return obj.get_current_streak()
+    
+    def get_streak_stats(self, obj):
+        return obj.get_streak_stats()
+    
+    def get_insurance_available(self, obj):
+        return obj.get_insurance_count()
+    
+    def get_can_use_insurance(self, obj):
+        return obj.can_use_insurance()
+    
+    def get_comeback_status(self, obj):
+        return obj.get_comeback_status()
+    
+    def get_motivational_message(self, obj):
+        return obj.get_motivational_message()
 
 
 class CheckinSerializer(serializers.ModelSerializer):
