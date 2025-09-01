@@ -13,6 +13,7 @@ import {
   showComebackCelebration,
   showFirstCompletionCelebration 
 } from '../utils/streakNotifications'
+import { useAnalytics } from '../hooks/useAnalytics'
 
 // Habit Card Component
 function HabitCard({ habit, onCheckin, onHabitUpdate }) {
@@ -21,6 +22,7 @@ function HabitCard({ habit, onCheckin, onHabitUpdate }) {
   const [note, setNote] = useState('')
   const [showDetails, setShowDetails] = useState(false)
   const [habitData, setHabitData] = useState(habit)
+  const { trackHabitAction, trackFeatureUsage } = useAnalytics()
 
   const checkinMutation = useMutation({
     mutationFn: async ({ habitId, value, note }) => {
@@ -78,6 +80,9 @@ function HabitCard({ habit, onCheckin, onHabitUpdate }) {
   }
 
   const handleInsuranceUsed = (data) => {
+    // Track insurance usage
+    trackHabitAction.insuranceUsed(habitData)
+    
     // Update habit data with new insurance info
     setHabitData(prev => ({
       ...prev,
@@ -92,6 +97,14 @@ function HabitCard({ habit, onCheckin, onHabitUpdate }) {
       setShowNote(true)
       return
     }
+    
+    // Track habit action
+    if (completed) {
+      trackHabitAction.completed(habitData)
+    } else {
+      trackHabitAction.skipped(habitData)
+    }
+    
     checkinMutation.mutate({ 
       habitId: habit.id, 
       value: completed, 
@@ -130,7 +143,12 @@ function HabitCard({ habit, onCheckin, onHabitUpdate }) {
             )}
           </div>
           <button
-            onClick={() => setShowDetails(!showDetails)}
+            onClick={() => {
+              setShowDetails(!showDetails)
+              if (!showDetails) {
+                trackFeatureUsage('habits_details')
+              }
+            }}
             className="text-2xl hover:scale-110 transition-transform duration-200"
           >
             {showDetails ? '📊' : '🎯'}
@@ -230,13 +248,18 @@ function AddHabitForm({ isOpen, onClose, onSuccess }) {
   const [cadence, setCadence] = useState('daily')
   const [difficulty, setDifficulty] = useState(1)
   const [anchor, setAnchor] = useState('')
+  const { trackHabitAction, trackFeatureUsage } = useAnalytics()
 
   const addHabitMutation = useMutation({
     mutationFn: async (habitData) => {
       const response = await api.post('/habits/', habitData)
       return response.data
     },
-    onSuccess: () => {
+    onSuccess: (habitData) => {
+      // Track habit creation
+      trackHabitAction.created(habitData)
+      trackFeatureUsage('habits')
+      
       onSuccess()
       onClose()
       setTitle('')
@@ -362,6 +385,12 @@ export default function HabitsPage() {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const [showAddForm, setShowAddForm] = useState(false)
+  const { trackFeatureUsage } = useAnalytics()
+
+  // Track page visit
+  useEffect(() => {
+    trackFeatureUsage('habits')
+  }, [])
 
   const { data: habits = [], isLoading, refetch } = useQuery({
     queryKey: ['habits'],

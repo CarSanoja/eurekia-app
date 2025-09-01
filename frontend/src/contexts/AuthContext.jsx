@@ -1,4 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
+import { initializeAnalytics } from '../utils/analytics'
 
 const AuthContext = createContext()
 
@@ -23,7 +24,7 @@ const authReducer = (state, action) => {
 
 const initialState = {
   user: null,
-  token: localStorage.getItem('authToken'),
+  token: localStorage.getItem('eurekia_token'),
   isAuthenticated: false,
   loading: false,
   error: null,
@@ -52,13 +53,15 @@ export function AuthProvider({ children }) {
       if (response.ok) {
         const user = await response.json()
         dispatch({ type: 'LOGIN_SUCCESS', payload: user })
+        // Initialize analytics when user is authenticated
+        initializeAnalytics(user)
       } else {
-        localStorage.removeItem('authToken')
+        localStorage.removeItem('eurekia_token')
         dispatch({ type: 'LOGOUT' })
       }
     } catch (error) {
       dispatch({ type: 'LOGIN_ERROR', payload: error.message })
-      localStorage.removeItem('authToken')
+      localStorage.removeItem('eurekia_token')
       dispatch({ type: 'LOGOUT' })
     }
   }
@@ -75,9 +78,11 @@ export function AuthProvider({ children }) {
       const data = await response.json()
       
       if (response.ok) {
-        localStorage.setItem('authToken', data.token)
+        localStorage.setItem('eurekia_token', data.token)
         dispatch({ type: 'SET_TOKEN', payload: data.token })
         dispatch({ type: 'LOGIN_SUCCESS', payload: data.user })
+        // Initialize analytics and track registration
+        initializeAnalytics(data.user)
         return { success: true }
       } else {
         dispatch({ type: 'LOGIN_ERROR', payload: data.detail || 'Registration failed' })
@@ -124,9 +129,11 @@ export function AuthProvider({ children }) {
       const data = await response.json()
       
       if (response.ok) {
-        localStorage.setItem('authToken', data.token)
+        localStorage.setItem('eurekia_token', data.token)
         dispatch({ type: 'SET_TOKEN', payload: data.token })
         dispatch({ type: 'LOGIN_SUCCESS', payload: data.user })
+        // Initialize analytics and track login
+        initializeAnalytics(data.user)
         return { success: true }
       } else {
         dispatch({ type: 'LOGIN_ERROR', payload: data.detail || 'OTP verification failed' })
@@ -139,7 +146,7 @@ export function AuthProvider({ children }) {
   }
 
   const logout = () => {
-    localStorage.removeItem('authToken')
+    localStorage.removeItem('eurekia_token')
     dispatch({ type: 'LOGOUT' })
   }
 
