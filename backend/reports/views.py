@@ -30,7 +30,7 @@ class ProgressReportView(APIView):
             habits_data = self._gather_habits_data(user)
             
             # Generate AI report using LangGraph
-            report = await langgraph_ai_service.generate_progress_report(user, habits_data)
+            report = langgraph_ai_service.generate_progress_report(user, habits_data)
             
             # Add metadata
             report.update({
@@ -161,7 +161,7 @@ class HeroReportView(APIView):
                 'overall_completion_rate': habits_data['completion_rate'],
                 'longest_streak': habits_data['longest_streak']
             }
-            ai_report = await langgraph_ai_service.generate_progress_report(user, simple_habits_data)
+            ai_report = langgraph_ai_service.generate_progress_report(user, simple_habits_data)
             motivational_message = ai_report.get('motivational_message', 'Keep building those amazing habits! 🚀')
             
             # Create hero report data
@@ -283,7 +283,7 @@ class AIInsightsView(APIView):
                 'longest_streak': habit_data['current_streak'],
                 'current_streaks': [habit_data['current_streak']]
             }
-            ai_report = await langgraph_ai_service.generate_progress_report(user, habits_data_for_ai)
+            ai_report = langgraph_ai_service.generate_progress_report(user, habits_data_for_ai)
             insights = ai_report.get('insights', [])
             
             response = {
