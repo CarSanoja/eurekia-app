@@ -28,7 +28,6 @@ INSTALLED_APPS = [
     'corsheaders',
     'rest_framework_simplejwt',
     'django_extensions',
-    'storages',
     'drf_spectacular',
     'django_filters',
     
@@ -167,19 +166,8 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@quanta.app')
 
-# S3 Storage Configuration (optional)
-USE_S3 = config('USE_S3', default=False, cast=bool)
-if USE_S3:
-    AWS_ACCESS_KEY_ID = config('AWS_ACCESS_KEY_ID')
-    AWS_SECRET_ACCESS_KEY = config('AWS_SECRET_ACCESS_KEY')
-    AWS_STORAGE_BUCKET_NAME = config('AWS_STORAGE_BUCKET_NAME')
-    AWS_S3_REGION_NAME = config('AWS_S3_REGION_NAME', default='us-east-1')
-    AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
-    AWS_S3_OBJECT_PARAMETERS = {
-        'CacheControl': 'max-age=86400',
-    }
-    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
-    STATICFILES_STORAGE = 'storages.backends.s3boto3.S3StaticStorage'
+# S3 Storage Configuration (disabled for now)
+# USE_S3 = config('USE_S3', default=False, cast=bool)
 
 # Security Settings
 SECURE_BROWSER_XSS_FILTER = True
@@ -231,16 +219,12 @@ CACHES = {
     }
 }
 
-# AI Configuration
-GOOGLE_API_KEY = config('GOOGLE_API_KEY', default='')
-AI_MODEL_NAME = config('AI_MODEL_NAME', default='gemini-1.5-flash')
-AI_MAX_TOKENS_INPUT = config('AI_MAX_TOKENS_INPUT', default=1000, cast=int)
-AI_MAX_TOKENS_OUTPUT = config('AI_MAX_TOKENS_OUTPUT', default=500, cast=int)
+# AI Configuration (disabled for now)
+# GOOGLE_API_KEY = config('GOOGLE_API_KEY', default='')
 
-# Messaging Configuration
-TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
-WHATSAPP_API_KEY = config('WHATSAPP_API_KEY', default='')
-WHATSAPP_API_URL = config('WHATSAPP_API_URL', default='')
+# Messaging Configuration (disabled for now)
+# TELEGRAM_BOT_TOKEN = config('TELEGRAM_BOT_TOKEN', default='')
+# WHATSAPP_API_KEY = config('WHATSAPP_API_KEY', default='')
 
 # Feature Flags
 FEATURES = {
