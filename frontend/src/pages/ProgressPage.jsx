@@ -5,74 +5,59 @@ import ProgressChart from '../components/progress/ProgressChart'
 import HabitCalendar from '../components/progress/HabitCalendar'
 import BadgeCollection from '../components/badges/BadgeCollection'
 import badgeService from '../services/badgeService.jsx'
+import apiService from '../services/apiService'
 import { useAuth } from '../contexts/AuthContext'
-
-// Demo data for progress tracking
-const generateDemoData = () => {
-  const data = []
-  const labels = []
-  const habitData = []
-  
-  // Generate last 30 days of data
-  for (let i = 29; i >= 0; i--) {
-    const date = new Date()
-    date.setDate(date.getDate() - i)
-    const dateStr = date.toISOString().split('T')[0]
-    
-    // Simulate varying completion rates
-    const completionRate = Math.max(0, Math.min(100, 70 + Math.random() * 40 - 20))
-    const habitsTotal = 3
-    const habitsCompleted = Math.round((completionRate / 100) * habitsTotal)
-    
-    data.push({
-      value: completionRate,
-      label: i === 29 || i === 15 || i === 0 ? 
-        date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '',
-      date: dateStr
-    })
-
-    // Generate individual habit data
-    const habits = ['Morning Exercise', 'Reading', 'Meditation']
-    habits.forEach((habitName, index) => {
-      habitData.push({
-        date: dateStr,
-        name: habitName,
-        completed: index < habitsCompleted,
-        habit_id: index + 1
-      })
-    })
-  }
-
-  return { chartData: data, habitData }
-}
 
 export default function ProgressPage() {
   const { user } = useAuth()
   const [badges, setBadges] = useState([])
+  const [progressStats, setProgressStats] = useState(null)
+  const [chartData, setChartData] = useState([])
+  const [calendarData, setCalendarData] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedView, setSelectedView] = useState('overview') // overview, charts, calendar, badges
-  
-  const { chartData, habitData } = generateDemoData()
-
-  // Demo stats
-  const demoStats = {
-    total_habits: 3,
-    active_streaks: 2,
-    total_checkins: 47,
-    adherence_percentage: 78,
-    current_week_progress: 85,
-    best_streak: 12,
-    habits_completed_today: 2,
-    consistency_score: 82
-  }
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const badgeData = await badgeService.fetchUserBadges()
+        // Load all data in parallel
+        const [badgeData, statsData, chartResponse, calendarResponse] = await Promise.all([
+          badgeService.fetchUserBadges(),
+          apiService.getProgressStats(),
+          apiService.getProgressChart(30),
+          apiService.getProgressCalendar(new Date().getFullYear(), new Date().getMonth() + 1)
+        ])
+
         setBadges(badgeData.badges)
+        setProgressStats(statsData)
+        
+        // Transform chart data to match component expectations
+        const transformedChartData = chartResponse.progress_data.map(item => ({
+          value: item.completion_rate,
+          label: item.label,
+          date: item.date
+        }))
+        setChartData(transformedChartData)
+        
+        // Transform calendar data
+        setCalendarData(calendarResponse.calendar_data)
+        
       } catch (error) {
-        console.error('Failed to load badges:', error)
+        console.error('Failed to load progress data:', error)
+        // Set fallback data on error
+        setBadges([])
+        setProgressStats({
+          total_habits: 0,
+          active_streaks: 0,
+          total_checkins: 0,
+          adherence_percentage: 0,
+          current_week_progress: 0,
+          best_streak: 0,
+          habits_completed_today: 0,
+          consistency_score: 0
+        })
+        setChartData([])
+        setCalendarData([])
       } finally {
         setLoading(false)
       }
@@ -140,7 +125,7 @@ export default function ProgressPage() {
               </div>
             </div>
             <div className="text-right">
-              <div className="text-3xl font-bold">{demoStats.consistency_score}%</div>
+              <div className="text-3xl font-bold">{progressStats?.consistency_score || 0}%</div>
               <div className="text-purple-100">Consistency Score</div>
             </div>
           </div>
@@ -177,7 +162,7 @@ export default function ProgressPage() {
         >
           {selectedView === 'overview' && (
             <div className="space-y-6">
-              <ProgressStats stats={demoStats} />
+              <ProgressStats stats={progressStats || {}} />
               <div className="grid md:grid-cols-2 gap-6">
                 <ProgressChart 
                   data={chartData} 
@@ -198,20 +183,8 @@ export default function ProgressPage() {
                   type="line"
                 />
                 <ProgressChart 
-                  data={chartData.map(d => ({ ...d, value: Math.random() * 10 + 5 }))} 
-                  title="Time Spent (hours)" 
-                  type="bar"
-                />
-              </div>
-              <div className="grid md:grid-cols-2 gap-6">
-                <ProgressChart 
-                  data={chartData.map(d => ({ ...d, value: Math.random() * 100 }))} 
-                  title="Mood Score" 
-                  type="line"
-                />
-                <ProgressChart 
-                  data={chartData.map(d => ({ ...d, value: Math.floor(Math.random() * 5) + 1 }))} 
-                  title="Habits per Day" 
+                  data={chartData.map(d => ({ ...d, value: d.value / 10 }))} 
+                  title="Habits Completed" 
                   type="bar"
                 />
               </div>
@@ -220,24 +193,24 @@ export default function ProgressPage() {
 
           {selectedView === 'calendar' && (
             <div className="space-y-6">
-              <HabitCalendar habitData={habitData} />
+              <HabitCalendar habitData={calendarData} />
               <div className="grid md:grid-cols-3 gap-4">
                 <div className="bg-white rounded-2xl p-6 text-center shadow-md">
                   <div className="text-3xl mb-2">🔥</div>
                   <div className="text-2xl font-bold text-orange-600">
-                    {habitData.filter(h => h.completed).length}
+                    {calendarData.filter(h => h.completed).length}
                   </div>
                   <div className="text-sm text-gray-600">Total Completed</div>
                 </div>
                 <div className="bg-white rounded-2xl p-6 text-center shadow-md">
                   <div className="text-3xl mb-2">📅</div>
-                  <div className="text-2xl font-bold text-blue-600">30</div>
+                  <div className="text-2xl font-bold text-blue-600">{calendarData.length}</div>
                   <div className="text-sm text-gray-600">Days Tracked</div>
                 </div>
                 <div className="bg-white rounded-2xl p-6 text-center shadow-md">
                   <div className="text-3xl mb-2">⚡</div>
                   <div className="text-2xl font-bold text-purple-600">
-                    {Math.round((habitData.filter(h => h.completed).length / habitData.length) * 100)}%
+                    {calendarData.length > 0 ? Math.round((calendarData.filter(h => h.completed).length / calendarData.length) * 100) : 0}%
                   </div>
                   <div className="text-sm text-gray-600">Success Rate</div>
                 </div>
@@ -251,12 +224,17 @@ export default function ProgressPage() {
               
               {/* Badge Stats */}
               <div className="grid md:grid-cols-4 gap-4">
-                {Object.entries(badgeService.getBadgeStats().byRarity).map(([rarity, count]) => (
+                {progressStats && Object.entries({
+                  common: 0,
+                  uncommon: 0, 
+                  rare: 0,
+                  epic: 0
+                }).map(([rarity, count]) => (
                   <div key={rarity} className="bg-white rounded-2xl p-4 text-center shadow-md">
                     <div className="text-2xl mb-2">
                       {rarity === 'epic' ? '✦' : rarity === 'rare' ? '★' : rarity === 'uncommon' ? '♦' : '○'}
                     </div>
-                    <div className="text-xl font-bold text-gray-800">{count}</div>
+                    <div className="text-xl font-bold text-gray-800">{badges.length}</div>
                     <div className="text-sm text-gray-600 capitalize">{rarity}</div>
                   </div>
                 ))}
@@ -270,10 +248,10 @@ export default function ProgressPage() {
                   You've earned {badges.length} badges so far. Every small step counts towards your transformation!
                 </p>
                 <button 
-                  onClick={() => badgeService.awardBadge('foundation', { test: true })}
+                  onClick={() => badgeService.testBadgeNotification()}
                   className="bg-white/20 hover:bg-white/30 px-6 py-2 rounded-xl font-medium transition-colors"
                 >
-                  Test Badge System 🏆
+                  Test Badge Notification 🏆
                 </button>
               </div>
             </div>

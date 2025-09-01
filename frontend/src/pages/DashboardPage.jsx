@@ -22,9 +22,10 @@ export default function DashboardPage() {
   const fetchBadges = async () => {
     try {
       const badgeData = await badgeService.fetchUserBadges()
-      setBadges(badgeData.badges)
+      setBadges(badgeData.badges || [])
     } catch (error) {
       console.error('Failed to load badges:', error)
+      setBadges([]) // Set empty array on error
     }
   }
 

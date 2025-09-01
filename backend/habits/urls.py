@@ -14,4 +14,13 @@ urlpatterns = [
     path('triggers/', views.TriggerListCreateView.as_view(), name='triggers'),
     path('env-pledge/', views.EnvPledgeView.as_view(), name='env-pledge'),
     path('plans/if-then/', views.PlanIfThenListCreateView.as_view(), name='if-then-plans'),
+    
+    # Badge endpoints
+    path('badges/', views.BadgeListView.as_view(), name='badges'),
+    path('badges/stats/', views.BadgeStatsView.as_view(), name='badge-stats'),
+    
+    # Progress tracking endpoints
+    path('progress/stats/', views.ProgressStatsView.as_view(), name='progress-stats'),
+    path('progress/chart/', views.HabitProgressView.as_view(), name='progress-chart'),
+    path('progress/calendar/', views.HabitCalendarView.as_view(), name='progress-calendar'),
 ]
