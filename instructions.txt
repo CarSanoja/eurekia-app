@@ -1,0 +1,273 @@
+# Quanta Habit Web App — MVP Product Specs (ASAP)
+
+**Audience:** Engineering, Product, and Design.
+
+**Goal:** Deliver the simplest possible web app that lets teens (13–16) set identity-aligned habits, do fast check‑ins, and feel rewarded—while collecting clean data for progress reports and the 8‑week program.
+
+---
+
+## 1) Product Principles
+
+* **As simple as possible:** 3–5 primary screens, low-friction flows, no deep settings in MVP.
+* **Teen-first:** visual, playful copy (hero, mission, levels, streaks), tap-sized hit areas, fast check-ins (<5s).
+* **Async by default:** works without live facilitation; offline-tolerant UI cues.
+* **Motivation loops:** streaks, badges, gentle nudges, positive language.
+* **Measurable:** everything important emits analytics.
+
+---
+
+## 2) Roles & Permissions
+
+* **Student (default):** create avatar, set mission (identity contract), add 1–2 habits, perform check-ins, fill mood and short forms, view streaks/badges, generate reports.
+* **Coach/Facilitator (phase 2, optional in MVP):** view cohorts, aggregate metrics, export reports.
+* **Admin (Quanta staff):** manage programs/batches, feature flags, **create courses, manage users, manage access to courses/resources, track AI usage**.
+
+> **MVP:** ship **Student** role + minimal Admin toggles (environment variables/feature flags). Admin extended features (courses, users, AI tracking) should be scaffolded early.
+
+---
+
+## 3) Information Architecture (MVP)
+
+* **Home / Dashboard** (default after login)
+* **Mission** (Identity Contract: “Hero I choose to be”)
+* **Habits** (check‑ins + streaks + stacking)
+* **Mood** (emotional check‑in)
+* **Reports** (progress + “Hero Infographic” when unlocked)
+* **Admin Section** (courses, users, access, AI usage tracking)
+
+Global: Avatar chip (top-right), notifications bell (non-functional placeholder if needed), help (?) modal with 1‑page how‑to.
+
+---
+
+## 4) Screens & Functionalities (by Session)
+
+*(unchanged content for sessions 0–8 as previously defined)*
+
+---
+
+## 4A) Admin Console (Courses • Users • Access • AI Tracking)
+
+**Entry:** `/admin` (Django Admin) + `/studio` (custom React admin shell for friendly UX).
+
+**Sections**
+
+* **Courses:** list, create, edit (title, code, dates, description, visibility). Publish/unpublish.
+* **Enrollments:** add/remove users to a course; assign role (student/coach).
+* **Resources:** attach links/docs to a course; set visibility and access rules.
+* **Users:** search, view profile, reset OTP login, roles overview; **manage contacts** (email, Telegram, WhatsApp), see consent/verification status; set **channel preferences**.
+* **AI Usage:** charts/tables with filters (date range, course, user, feature); export CSV. Shows tokens, latency, status; drill‑down to request/response previews (redacted).
+* **Messaging:** send **broadcast** to a course (templated) over selected channel(s) with rate limiting and preview; see delivery status.
+
+**Acceptance Criteria**
+
+* Admin can add a student’s Telegram/WhatsApp and trigger opt‑in message.
+* Broadcast honors consent and quiet hours; shows per‑channel delivery status.
+* Resource visibility respected by API (only enrolled users can fetch restricted resources).
+* AI usage list paginated, filterable, and exportable.
+
+---
+
+## 5) Non-Functional Requirements (MVP) (MVP)
+
+* **Devices:** Mobile-first responsive web (≥360px). Desktop OK.
+* **Perf:** First load TTI < 3s on 3G Fast; subsequent nav < 1s (SPA).
+* **i18n:** EN/ES ready; copy in resource files.
+* **Accessibility:** WCAG 2.1 AA basics (focus states, labels, contrast).
+* **Privacy:** COPPA-friendly tone; no ads; data minimization; export/delete my data.
+* **Reliability:** Queue user actions offline (LocalStorage) and sync when online.
+
+---
+
+## 6) Minimal Data Model (MVP)
+
+* **User**{id, name, email, class\_code\_id, avatar{icon, color}, locale, created\_at}
+* **ContactMethod**{id, user\_id, channel(enum: email|telegram|whatsapp), address(string: email|e164|telegram\_id), verified(bool), consent(enum: pending|granted|revoked), created\_at}
+* **ChannelPreference**{id, user\_id, primary(enum: web|email|telegram|whatsapp), allow\_prompts(bool), quiet\_hours(json?)}
+* **Role**{id, key(enum: student|coach|admin)}
+* **UserRole**{id, user\_id, role\_id}
+* **Course**{id, title, code, description, start\_date, end\_date, visibility(enum: draft|live), created\_by}
+* **Enrollment**{id, user\_id, course\_id, role(enum: student|coach)}
+* **Resource**{id, course\_id, title, type(enum: doc|link|video|pdf), url, visibility}
+* **AccessRule**{id, course\_id, resource\_id, audience(enum: enrolled|coaches|public)}
+* **Mission**{id, user\_id, skill, weakness, updated\_at}
+* **Vision**{id, user\_id, tags\[3], summary, image\_url}
+* **Habit**{id, user\_id, title, cadence(daily|weekly), difficulty\_level, anchor, micro\_habit}
+* **Checkin**{id, habit\_id, date, value(bool), note(optional), used\_insurance(bool), channel(enum: web|telegram|whatsapp|email)}
+* **Mood**{id, user\_id, date, score(1–5), note, channel(enum: web|telegram|whatsapp)}
+* **Trigger**{id, user\_id, text, response, tags\[], created\_at}
+* **EnvPledge**{id, user\_id, text, cadence(weekly), last\_checkin\_date}
+* **PlanIfThen**{id, user\_id, situation, action}
+* **Badge**{id, user\_id, type(enum), awarded\_at}
+* **Report**{id, user\_id, type(progress|hero), url, created\_at}
+* **AIUsage**{id, user\_id, course\_id?, feature(enum: report|insight|coach\_prompt), model(enum: gemini-1.5|gemini-flash), token\_in, token\_out, latency\_ms, status(ok|error), created\_at}
+* **OutboundMessage**{id, user\_id, channel, template\_key, payload\_json, status(enum: queued|sent|failed), provider\_msg\_id?, created\_at}
+* **InboundMessage**{id, user\_id, channel, text, parsed\_intent(enum: checkin|mood|help|unknown), meta\_json, created\_at}
+* **ConsentLog**{id, user\_id, channel, action(enum: opt\_in|opt\_out), source(enum: web|telegram|whatsapp|email), created\_at}
+
+Indexes: (Enrollment user\_id, course\_id), (AIUsage created\_at, user\_id), (Checkin habit\_id, date), (ContactMethod user\_id, channel).
+
+---
+
+## 7) Minimal API Surface (REST, JSON)
+
+**Auth**
+
+* `POST /auth/join` {name, email, class\_code} → {user, token}
+* `POST /auth/otp` {email} → {status}
+* `POST /auth/verify` {email, code} → {token}
+
+**Admin — Courses & Access** (Django Admin UI + JSON APIs)
+
+* `POST /admin/courses` {title, code, description, start\_date?, end\_date?}
+* `PUT /admin/courses/{id}` {...}
+* `POST /admin/courses/{id}/enroll` {user\_id, role}
+* `DELETE /admin/courses/{id}/enroll/{enrollment_id}`
+* `POST /admin/resources` {course\_id, title, type, url, visibility}
+* `POST /admin/access-rules` {course\_id, resource\_id, audience}
+* `GET /admin/ai-usage` {from,to,course\_id?,user\_id?}
+
+**Contacts & Channels**
+
+* `POST /contacts` {channel, address} → start verification/opt‑in flow
+* `PUT /contacts/{id}` {verified?, consent?}
+* `PUT /channels/preferences` {primary, allow\_prompts, quiet\_hours?}
+* **Telegram Webhook:** `POST /hooks/telegram` (bot updates) → upsert `telegram_user_id`, parse commands
+* **WhatsApp Webhook:** `POST /hooks/whatsapp` (Meta/Twilio) → opt‑ins, inbound messages
+
+**Profile & Mission**
+
+* `PUT /users/me` {avatar}
+* `PUT /mission` {skill, weakness}
+* `POST /vision` {tags?, summary?, image?}
+
+**Habits**
+
+* `POST /habits` {title, cadence, difficulty\_level?, anchor?, micro\_habit?}
+* `GET /habits`
+* `POST /habits/{id}/checkins` {date, value, note?, use\_insurance?, channel?}
+* `PUT /habits/{id}` {title?, cadence?, difficulty\_level?, anchor?, micro\_habit?}
+
+**Mood & Tools**
+
+* `POST /mood` {date, score, note?, channel?}
+* `POST /emotional-tools` {emotion, tool}
+
+**Journals & Pledges**
+
+* `POST /triggers` {text, response?, tags?}
+* `POST /env-pledge` {text}
+* `POST /env-pledge/checkin` {date, value}
+
+**Plans**
+
+* `POST /plans/if-then` {situation, action}
+
+**Reports & AI**
+
+* `POST /reports/progress` → {url}
+* `POST /reports/hero` → {url}
+* `POST /ai/insight` {prompt, context?} → {text, meta{model, tokens}}
+
+**Messaging**
+
+* `POST /messages/send` {user\_id, channel, template\_key, payload}
+* `GET /messages/outbound` {status?, channel?, user\_id?}
+
+Events emitted (analytics): `baseline_completed`, `habit_checkin`, `mood_logged`, `badge_awarded`, `streak_insurance_used`, `report_generated`, `ai_call_made`, `contact_opt_in`, `contact_opt_out`, `message_sent`.
+
+---
+
+## 8) Gamification (MVP Rules)
+
+*(unchanged)*
+
+---
+
+## 9) Notifications & Multi‑Channel Messaging
+
+* **Channels:** Web in‑app, Email, **Telegram**, **WhatsApp**.
+* **Consent:** Double opt‑in for Telegram (user starts bot) and WhatsApp (Meta-approved opt‑in). Store `ConsentLog` entries; per‑channel unsubscribe supported ("STOP" for WA, "/stop" for Telegram).
+* **Use cases:** habit reminders, environment pledge weekly ping, report-ready alerts, session nudges.
+* **Quiet Hours:** default 21:00–07:00 user‑local; override per user via `ChannelPreference`.
+* **Rate limits:** global provider caps + per-user (≤3 proactive messages/day, configurable).
+* **Templates:** provider-approved WA templates; Markdown-lite for Telegram.
+* **Inbound parsing:** simple command grammar: `checkin <habit> yes|no`, `mood 1-5`, `help` → creates `InboundMessage` and corresponding action.
+
+MVP fallback: if provider not configured, show in‑app reminder banners and email only.
+
+---
+
+## 10) Analytics & Metrics
+
+* **Adoption:** accounts created, avatar completion, mission filled, baseline complete.
+* **Engagement:** DAU/WAU, check‑ins rate (by channel), mood compliance, streak length distribution.
+* **Outcomes:** percent with ≥70% adherence, number of comeback notes, report generation rate.
+* **Program:** retention into maintenance mode (week 9+), course enrollments.
+* **AI Usage:** per‑feature counts, success/error rate, p95 latency, avg token\_in/out, cost estimator (tokens × rate table), per‑course and per‑user slices.
+* **Messaging:** opt‑in rates by channel, delivery/failed counts, response rate to nudges, quiet‑hours blocks.
+
+Admin dashboards: tables + filters (date range, course, user, feature/channel); CSV export.
+
+---
+
+## 11) Tech & Delivery
+
+* **Frontend:** **Vite + React + Tailwind** (SPA/PWA). Routing with React Router. State via lightweight context + TanStack Query for server cache.
+* **Backend:** **Django** (Django REST Framework) for APIs, admin, and auth (OTP/magic link via email). Async tasks with Celery + Redis (optional, phase 2 for reports/notifications).
+* **AI Orchestration:** **LangGraph** (Python) for deterministic, inspectable agent flows (report generation, future correlations, coach-style prompts). Models via **Google Gemini** (1.5/Flash) behind a single service wrapper with safety settings and request/response logging.
+* **DB:** **PostgreSQL** (primary). Use UUID PKs, row‑level security patterns for per‑user isolation where applicable.
+* **Storage:** S3‑compatible bucket for images (avatars) and generated PDFs/PNGs.
+* **Messaging Channels:**
+
+  * **Telegram Bot API** (official) for 1:1 bot chats; store `telegram_user_id` after user starts the bot.
+  * **WhatsApp Business API** (Meta Cloud API or Twilio) for templated outbound + session messages; store `wa_phone_e164` after verified opt‑in.
+  * Email (existing) for OTP and summaries.
+* **Build & Deploy:** Docker images; CI/CD (GitHub Actions). Single region. Feature flags via Django settings / LaunchDarkly (optional).
+* **Observability:** Django logging + OpenTelemetry exporters (metrics/traces) + Sentry.
+
+---
+
+## 12) Accessibility & UX Polishing
+
+*(unchanged)*
+
+---
+
+## 13) Phasing & Scope Cuts
+
+* **Must-have (MVP, 4–6 weeks):** Onboarding, Mission, Habits check‑ins with streaks, Mood, Habit stacking (one rule), Baseline quiz, Progress Report (basic), Foundation badge, Admin basic (courses, users, access, AI usage tracking).
+* **Nice-to-have:** Triggers journal, Env pledge, If‑Then plans, Advanced Mode (difficulty), Streak insurance.
+* **Later:** Coach dashboard, contextual emotional tools, correlations insights, push notifications, full XP system.
+
+---
+
+## 14) Acceptance Test Checklist (Short)
+
+*(plus)*
+
+* [ ] Admin can create a course and assign a user.
+* [ ] Admin can see AI usage log per user.
+
+---
+
+## 15) UI Wireframe Notes (Textual)
+
+* **Dashboard:** hero card (North Star + Mission), today’s habits list with Yes/No, streak chips, mood quick tap, badge carousel.
+* **Mission:** two text inputs + save; preview card.
+* **Habits:** list rows with toggles; Advanced Mode panel collapsed by default.
+* **Mood:** big emoji row + note; history mini-graph (sparkline).
+* **Reports:** generate buttons + latest reports list.
+* **Admin:** course list with create button, user list with access roles, AI usage table.
+
+---
+
+## 16) Risks & Mitigations
+
+* **Overcomplexity:** keep ≤2 habits in MVP → toggle via flag later.
+* **Notification deliverability:** fallback to in-app banners; don’t block flows.
+* **Data sparsity:** allow reports with partial data; show encouraging copy.
+* **AI costs:** monitor AI usage via Admin metrics; set quotas per user/course.
+
+---
+
+**Done = working software meeting ACs above, mobile-first, with clean telemetry and AI usage tracking.**

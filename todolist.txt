@@ -1,0 +1,429 @@
+# Quanta Habit Web App - Detailed Implementation Todo List
+
+## Phase 1: Project Setup & Infrastructure
+
+### 1.1 Backend Setup (Django)
+- [ ] Initialize Django project with proper structure
+- [ ] Configure settings.py with environment variables
+- [ ] Set up PostgreSQL database connection
+- [ ] Install and configure Django REST Framework
+- [ ] Set up CORS headers for frontend communication
+- [ ] Configure static and media file handling
+- [ ] Set up Django Admin base configuration
+- [ ] Configure logging with proper formatters
+- [ ] Set up environment-specific settings (dev/staging/prod)
+
+### 1.2 Frontend Setup (Vite + React + Tailwind)
+- [ ] Initialize Vite project with React template
+- [ ] Install and configure Tailwind CSS
+- [ ] Set up React Router for navigation
+- [ ] Configure TanStack Query for server state management
+- [ ] Set up context providers for local state
+- [ ] Configure axios/fetch with API base URL
+- [ ] Set up environment variables (.env files)
+- [ ] Configure build optimization settings
+- [ ] Set up ESLint and Prettier
+
+### 1.3 Development Environment
+- [ ] Create Docker configuration for local development
+- [ ] Set up docker-compose with PostgreSQL, Redis
+- [ ] Configure hot-reloading for both frontend and backend
+- [ ] Set up pre-commit hooks for code quality
+- [ ] Create Makefile with common commands
+
+## Phase 2: Data Models & Database
+
+### 2.1 Core User Models
+- [ ] Create User model with required fields
+- [ ] Create ContactMethod model for multi-channel communication
+- [ ] Create ChannelPreference model for notification settings
+- [ ] Create Role and UserRole models for permissions
+- [ ] Set up model relationships and constraints
+- [ ] Create database migrations
+
+### 2.2 Course & Enrollment Models
+- [ ] Create Course model with visibility states
+- [ ] Create Enrollment model with student/coach roles
+- [ ] Create Resource model for course materials
+- [ ] Create AccessRule model for resource permissions
+- [ ] Set up foreign key relationships
+- [ ] Add appropriate indexes for performance
+
+### 2.3 Habit & Progress Models
+- [ ] Create Mission model for identity contracts
+- [ ] Create Vision model for goal visualization
+- [ ] Create Habit model with cadence and difficulty
+- [ ] Create Checkin model with multi-channel support
+- [ ] Create Mood model for emotional tracking
+- [ ] Create Trigger model for journaling
+- [ ] Create EnvPledge model for environmental commitments
+- [ ] Create PlanIfThen model for behavioral planning
+
+### 2.4 Gamification & Reporting Models
+- [ ] Create Badge model with achievement types
+- [ ] Create Report model for progress tracking
+- [ ] Create AIUsage model for AI metrics tracking
+- [ ] Set up badge logic and streak calculations
+
+### 2.5 Messaging Models
+- [ ] Create OutboundMessage model for sent messages
+- [ ] Create InboundMessage model for received messages
+- [ ] Create ConsentLog model for opt-in tracking
+- [ ] Set up message status tracking
+
+## Phase 3: Authentication & Authorization
+
+### 3.1 Authentication System
+- [ ] Implement OTP/magic link authentication
+- [ ] Create JWT token generation and validation
+- [ ] Set up email service for OTP delivery
+- [ ] Implement session management
+- [ ] Create password-less login flow
+- [ ] Add rate limiting for auth endpoints
+
+### 3.2 Authorization & Permissions
+- [ ] Implement role-based access control (RBAC)
+- [ ] Create permission decorators for API endpoints
+- [ ] Set up Django admin permissions
+- [ ] Implement resource-level access control
+- [ ] Create middleware for auth validation
+
+## Phase 4: Core API Development
+
+### 4.1 Auth APIs
+- [ ] POST /auth/join - User registration
+- [ ] POST /auth/otp - Request OTP
+- [ ] POST /auth/verify - Verify OTP and get token
+- [ ] Add input validation and error handling
+
+### 4.2 Profile & Mission APIs
+- [ ] PUT /users/me - Update user profile
+- [ ] PUT /mission - Set/update mission
+- [ ] POST /vision - Create vision board
+- [ ] GET endpoints for retrieving data
+
+### 4.3 Habit Management APIs
+- [ ] POST /habits - Create new habit
+- [ ] GET /habits - List user habits
+- [ ] PUT /habits/{id} - Update habit
+- [ ] POST /habits/{id}/checkins - Record check-in
+- [ ] Calculate streaks and insurance logic
+
+### 4.4 Mood & Wellness APIs
+- [ ] POST /mood - Record mood entry
+- [ ] GET /mood/history - Retrieve mood history
+- [ ] POST /emotional-tools - Add emotional tools
+- [ ] POST /triggers - Record triggers
+
+### 4.5 Planning & Pledge APIs
+- [ ] POST /plans/if-then - Create if-then plans
+- [ ] POST /env-pledge - Create environmental pledge
+- [ ] POST /env-pledge/checkin - Record pledge check-in
+
+### 4.6 Reports & Analytics APIs
+- [ ] POST /reports/progress - Generate progress report
+- [ ] POST /reports/hero - Generate hero infographic
+- [ ] Implement report generation logic
+- [ ] Set up PDF/image generation
+
+## Phase 5: Admin Console
+
+### 5.1 Django Admin Configuration
+- [ ] Customize Django admin interface
+- [ ] Create admin models for all entities
+- [ ] Add filters and search capabilities
+- [ ] Implement bulk actions
+- [ ] Add data export functionality
+
+### 5.2 Custom Admin Studio (React)
+- [ ] Create /studio route and layout
+- [ ] Build course management interface
+- [ ] Build user management interface
+- [ ] Build enrollment management
+- [ ] Build resource management
+- [ ] Build AI usage dashboard
+- [ ] Add CSV export functionality
+
+### 5.3 Admin APIs
+- [ ] POST /admin/courses - Create course
+- [ ] PUT /admin/courses/{id} - Update course
+- [ ] POST /admin/courses/{id}/enroll - Enroll user
+- [ ] DELETE /admin/courses/{id}/enroll/{id} - Remove enrollment
+- [ ] POST /admin/resources - Add resource
+- [ ] POST /admin/access-rules - Set access rules
+- [ ] GET /admin/ai-usage - Get AI usage metrics
+
+## Phase 6: Frontend Core Components
+
+### 6.1 Layout & Navigation
+- [ ] Create main app layout with routing
+- [ ] Build navigation header with avatar
+- [ ] Create bottom navigation for mobile
+- [ ] Implement responsive design patterns
+- [ ] Add loading states and skeletons
+
+### 6.2 Authentication Flow
+- [ ] Build join/signup screen
+- [ ] Create OTP entry screen
+- [ ] Implement token storage and refresh
+- [ ] Add auth context provider
+- [ ] Create protected route wrapper
+
+### 6.3 Onboarding Screens
+- [ ] Build avatar creation component
+- [ ] Create mission setup screen
+- [ ] Build vision board interface
+- [ ] Create habit selection screen
+- [ ] Implement baseline quiz
+- [ ] Add progress indicators
+
+### 6.4 Dashboard
+- [ ] Create main dashboard layout
+- [ ] Build hero card component
+- [ ] Create habit check-in cards
+- [ ] Add streak display components
+- [ ] Build mood quick-tap widget
+- [ ] Create badge carousel
+
+### 6.5 Mission Screen
+- [ ] Build mission editor interface
+- [ ] Create mission preview card
+- [ ] Add save/update functionality
+- [ ] Implement validation
+
+### 6.6 Habits Management
+- [ ] Create habits list view
+- [ ] Build habit creation form
+- [ ] Add habit editing interface
+- [ ] Create check-in modal/sheet
+- [ ] Build streak visualization
+- [ ] Implement habit stacking UI
+- [ ] Add advanced mode toggle
+
+### 6.7 Mood Tracking
+- [ ] Build mood entry interface
+- [ ] Create emoji selector
+- [ ] Add note input field
+- [ ] Build mood history graph
+- [ ] Create sparkline visualization
+
+### 6.8 Reports Section
+- [ ] Create reports dashboard
+- [ ] Build report generation buttons
+- [ ] Add report history list
+- [ ] Implement report preview
+- [ ] Add download functionality
+
+## Phase 7: Multi-Channel Messaging
+
+### 7.1 Telegram Integration
+- [ ] Set up Telegram Bot API credentials
+- [ ] Create webhook endpoint /hooks/telegram
+- [ ] Implement bot command parsing
+- [ ] Build opt-in flow for Telegram
+- [ ] Create message templates
+- [ ] Implement inbound message handling
+- [ ] Add Telegram-specific check-in flow
+
+### 7.2 WhatsApp Integration
+- [ ] Configure WhatsApp Business API (Meta/Twilio)
+- [ ] Create webhook endpoint /hooks/whatsapp
+- [ ] Implement opt-in verification
+- [ ] Build approved message templates
+- [ ] Handle inbound messages
+- [ ] Implement session message handling
+- [ ] Add WhatsApp-specific check-in flow
+
+### 7.3 Email Integration
+- [ ] Configure email service (SendGrid/SES)
+- [ ] Create email templates
+- [ ] Implement email sending logic
+- [ ] Add unsubscribe handling
+- [ ] Set up bounce/complaint handling
+
+### 7.4 Notification Engine
+- [ ] Build notification queue system
+- [ ] Implement channel preference logic
+- [ ] Add quiet hours enforcement
+- [ ] Create rate limiting logic
+- [ ] Build retry mechanism
+- [ ] Add delivery status tracking
+
+### 7.5 Messaging APIs
+- [ ] POST /contacts - Add contact method
+- [ ] PUT /contacts/{id} - Update contact
+- [ ] PUT /channels/preferences - Set preferences
+- [ ] POST /messages/send - Send message
+- [ ] GET /messages/outbound - List sent messages
+
+## Phase 8: AI Integration
+
+### 8.1 LangGraph Setup
+- [ ] Install and configure LangGraph
+- [ ] Set up Google Gemini API credentials
+- [ ] Create AI service wrapper
+- [ ] Implement safety settings
+- [ ] Add request/response logging
+
+### 8.2 AI Features
+- [ ] Build report generation agent
+- [ ] Create insight generation logic
+- [ ] Implement coach-style prompts
+- [ ] Add context injection
+- [ ] Create AI usage tracking
+- [ ] Implement token counting
+
+### 8.3 AI Monitoring
+- [ ] Create usage metrics collection
+- [ ] Build cost estimation logic
+- [ ] Add per-user quotas
+- [ ] Implement rate limiting
+- [ ] Create admin dashboard views
+
+## Phase 9: Gamification System
+
+### 9.1 Streak System
+- [ ] Implement streak calculation logic
+- [ ] Create streak display components
+- [ ] Add streak insurance mechanism
+- [ ] Build comeback logic
+- [ ] Create streak notifications
+
+### 9.2 Badge System
+- [ ] Define badge types and criteria
+- [ ] Implement badge awarding logic
+- [ ] Create badge display components
+- [ ] Add badge unlock animations
+- [ ] Build badge collection view
+
+### 9.3 Progress Tracking
+- [ ] Calculate adherence percentages
+- [ ] Create progress visualizations
+- [ ] Build level/XP system (if needed)
+- [ ] Add milestone celebrations
+
+## Phase 10: Testing & Quality Assurance
+
+### 10.1 Backend Testing
+- [ ] Write unit tests for models
+- [ ] Create API endpoint tests
+- [ ] Add integration tests
+- [ ] Test authentication flows
+- [ ] Test permission systems
+- [ ] Test messaging integrations
+
+### 10.2 Frontend Testing
+- [ ] Set up Jest and React Testing Library
+- [ ] Write component unit tests
+- [ ] Create integration tests
+- [ ] Test user flows end-to-end
+- [ ] Add accessibility tests
+
+### 10.3 Performance Testing
+- [ ] Test page load times
+- [ ] Optimize bundle sizes
+- [ ] Test offline functionality
+- [ ] Verify mobile performance
+- [ ] Load test API endpoints
+
+## Phase 11: Deployment & DevOps
+
+### 11.1 CI/CD Pipeline
+- [ ] Set up GitHub Actions workflows
+- [ ] Configure automated testing
+- [ ] Add linting and formatting checks
+- [ ] Create build pipelines
+- [ ] Set up deployment automation
+
+### 11.2 Infrastructure
+- [ ] Configure production database
+- [ ] Set up Redis for caching/queues
+- [ ] Configure S3 for file storage
+- [ ] Set up CDN for static assets
+- [ ] Configure monitoring services
+
+### 11.3 Deployment
+- [ ] Create Docker production images
+- [ ] Set up environment configurations
+- [ ] Configure SSL certificates
+- [ ] Set up domain and DNS
+- [ ] Deploy to production server
+
+## Phase 12: Analytics & Monitoring
+
+### 12.1 Analytics Implementation
+- [ ] Set up event tracking system
+- [ ] Implement user behavior analytics
+- [ ] Track feature adoption metrics
+- [ ] Create engagement metrics
+- [ ] Build retention tracking
+
+### 12.2 Monitoring Setup
+- [ ] Configure error tracking (Sentry)
+- [ ] Set up performance monitoring
+- [ ] Add uptime monitoring
+- [ ] Create alerting rules
+- [ ] Build admin dashboards
+
+### 12.3 Observability
+- [ ] Set up OpenTelemetry
+- [ ] Configure metrics exporters
+- [ ] Add distributed tracing
+- [ ] Create log aggregation
+- [ ] Build debugging tools
+
+## Phase 13: Documentation & Training
+
+### 13.1 Technical Documentation
+- [ ] Write API documentation
+- [ ] Create deployment guide
+- [ ] Document environment setup
+- [ ] Write troubleshooting guide
+- [ ] Create architecture diagrams
+
+### 13.2 User Documentation
+- [ ] Create user help pages
+- [ ] Write FAQ section
+- [ ] Build in-app tooltips
+- [ ] Create video tutorials
+- [ ] Write admin guide
+
+## Phase 14: Final Polish & Launch Prep
+
+### 14.1 UI/UX Polish
+- [ ] Review and fix responsive issues
+- [ ] Add micro-animations
+- [ ] Ensure consistent styling
+- [ ] Fix accessibility issues
+- [ ] Optimize user flows
+
+### 14.2 Security Review
+- [ ] Conduct security audit
+- [ ] Fix vulnerabilities
+- [ ] Review data privacy
+- [ ] Ensure COPPA compliance
+- [ ] Test permission systems
+
+### 14.3 Launch Preparation
+- [ ] Create launch checklist
+- [ ] Prepare rollback plan
+- [ ] Set up user support channels
+- [ ] Create monitoring dashboards
+- [ ] Plan staged rollout
+
+## Acceptance Criteria Verification
+- [ ] User can create account and set up avatar
+- [ ] User can define mission and vision
+- [ ] User can add and track habits
+- [ ] Check-ins work across all channels
+- [ ] Streaks calculate correctly
+- [ ] Mood tracking functions properly
+- [ ] Reports generate successfully
+- [ ] Admin can manage courses and users
+- [ ] AI usage is tracked and visible
+- [ ] Messaging works on all channels
+- [ ] Mobile-first responsive design works
+- [ ] Performance meets targets (<3s TTI)
+- [ ] Offline functionality works
+- [ ] All gamification features function
+- [ ] Analytics events fire correctly
