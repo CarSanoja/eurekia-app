@@ -10,20 +10,10 @@ from .base import *
 DEBUG = False
 
 # Production allowed hosts
-ALLOWED_HOSTS = [
-    'eurekia-backend.up.railway.app',
-    'eurekia-backend-production.up.railway.app',
-    'localhost',
-    '127.0.0.1',
-]
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # CORS settings for production
-CORS_ALLOWED_ORIGINS = [
-    "https://eurekia-app.vercel.app",
-    "https://eurekia-frontend.vercel.app",
-    "http://localhost:5173",  # For local development
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173,http://localhost:3000').split(',')
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_ALL_ORIGINS = False
