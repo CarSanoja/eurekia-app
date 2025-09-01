@@ -1,7 +1,51 @@
 import { useState, useEffect } from 'react'
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import DashboardPage from '../pages/DashboardPage'
 import OnboardingPage from '../pages/OnboardingPage'
+import SettingsPage from '../pages/SettingsPage'
+import HabitsPage from '../pages/HabitsPage'
+import MissionPage from '../pages/MissionPage'
+import MoodPage from '../pages/MoodPage'
+import ReportsPage from '../pages/ReportsPage'
+
+// Navigation Component
+function AppNavigation() {
+  const navigate = useNavigate()
+  const location = useLocation()
+  const { user } = useAuth()
+
+  const navItems = [
+    { path: '/', icon: '🏠', label: 'Home' },
+    { path: '/habits', icon: '🎯', label: 'Quests' },
+    { path: '/mood', icon: '😊', label: 'Mood' },
+    { path: '/reports', icon: '📊', label: 'Stats' },
+    { path: '/settings', icon: '⚙️', label: 'Settings' },
+  ]
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-purple-100 z-50">
+      <div className="max-w-md mx-auto px-4 py-2">
+        <div className="flex justify-around">
+          {navItems.map((item) => (
+            <button
+              key={item.path}
+              onClick={() => navigate(item.path)}
+              className={`flex flex-col items-center px-3 py-2 rounded-xl transition-all duration-200 ${
+                location.pathname === item.path
+                  ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white shadow-lg'
+                  : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+              }`}
+            >
+              <span className="text-xl mb-1">{item.icon}</span>
+              <span className="text-xs font-medium">{item.label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function MainApp() {
   const { user } = useAuth()
@@ -42,5 +86,17 @@ export default function MainApp() {
     return <OnboardingPage onComplete={handleOnboardingComplete} />
   }
 
-  return <DashboardPage />
+  return (
+    <div className="min-h-screen pb-20">
+      <Routes>
+        <Route path="/" element={<DashboardPage />} />
+        <Route path="/habits" element={<HabitsPage />} />
+        <Route path="/mission" element={<MissionPage />} />
+        <Route path="/mood" element={<MoodPage />} />
+        <Route path="/reports" element={<ReportsPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+      </Routes>
+      <AppNavigation />
+    </div>
+  )
 }
