@@ -1,0 +1,51 @@
+version: 2
+updates:
+  # Enable version updates for npm (frontend)
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    reviewers:
+      - "CarSanoja"
+    assignees:
+      - "CarSanoja"
+    labels:
+      - "dependencies"
+      - "frontend"
+
+  # Enable version updates for pip (backend)
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+    reviewers:
+      - "CarSanoja"
+    assignees:
+      - "CarSanoja"
+    labels:
+      - "dependencies"
+      - "backend"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    reviewers:
+      - "CarSanoja"
+    assignees:
+      - "CarSanoja"
+    labels:
+      - "ci"
+      - "dependencies"
