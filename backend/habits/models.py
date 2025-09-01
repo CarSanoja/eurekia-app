@@ -1,6 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+from pgvector.django import VectorField
 import uuid
 
 
@@ -9,6 +10,8 @@ class Mission(models.Model):
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='mission')
     skill = models.TextField(help_text="Skill or strength I want to develop")
     weakness = models.TextField(help_text="Weakness I want to overcome")
+    skill_embedding = VectorField(dimensions=768, null=True, blank=True)
+    weakness_embedding = VectorField(dimensions=768, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -54,6 +57,8 @@ class Habit(models.Model):
     difficulty_level = models.IntegerField(choices=DIFFICULTY_CHOICES, default=1)
     anchor = models.TextField(blank=True, help_text="When/where to do this habit")
     micro_habit = models.TextField(blank=True, help_text="Smallest version of this habit")
+    title_embedding = VectorField(dimensions=768, null=True, blank=True)
+    anchor_embedding = VectorField(dimensions=768, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -283,6 +288,7 @@ class Checkin(models.Model):
     date = models.DateField()
     value = models.BooleanField(help_text="True if completed, False if skipped")
     note = models.TextField(blank=True)
+    note_embedding = VectorField(dimensions=768, null=True, blank=True)
     used_insurance = models.BooleanField(default=False)
     channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES, default='web')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -311,6 +317,7 @@ class Mood(models.Model):
     date = models.DateField()
     score = models.IntegerField(help_text="1-5 scale")
     note = models.TextField(blank=True)
+    note_embedding = VectorField(dimensions=768, null=True, blank=True)
     channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES, default='web')
     created_at = models.DateTimeField(auto_now_add=True)
     
