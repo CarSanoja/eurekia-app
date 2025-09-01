@@ -1,5 +1,43 @@
 # Quanta Habit Web App — MVP Product Specs (ASAP)
 
+🚀 Application URLs
+
+  Frontend (Main Application)
+
+  URL: http://localhost:5173/
+  - Complete React app with kid-friendly gamified interface
+  - Onboarding flow with avatar creation
+  - Habit tracking and check-ins
+  - AI-powered reports (when available)
+  - Dashboard with hero journey gamification
+
+  Backend API
+
+  URL: http://localhost:8001/
+  - Django REST Framework API
+  - Authentication endpoints
+  - Habit management APIs
+  - AI report generation
+  - Multi-channel messaging system
+
+  API Documentation
+
+  URLs:
+  - Swagger UI: http://localhost:8001/api/docs/
+  - ReDoc: http://localhost:8001/api/redoc/
+  - API Schema: http://localhost:8001/api/schema/
+
+  Admin Interfaces
+
+  URLs:
+  - Django Admin: http://localhost:8001/admin/
+  - Custom Admin Studio: http://localhost:5173/studio
+
+  Database & Cache
+
+  - PostgreSQL: localhost:5433
+  - Redis: localhost:6380
+
 **Audience:** Engineering, Product, and Design.
 
 **Goal:** Deliver the simplest possible web app that lets teens (13–16) set identity-aligned habits, do fast check‑ins, and feel rewarded—while collecting clean data for progress reports and the 8‑week program.

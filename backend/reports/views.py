@@ -6,8 +6,8 @@ from django.utils import timezone
 from datetime import timedelta
 import logging
 
-from habits.models import Habit, Checkin
-from core.ai_service import ai_service
+from habits.models import Habit, Checkin, Mood, Badge
+from ai_services.langgraph_service import langgraph_ai_service
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,8 @@ class ProgressReportView(APIView):
             # Gather habit data for the user
             habits_data = self._gather_habits_data(user)
             
-            # Generate AI report
-            report = ai_service.generate_progress_report(user, habits_data)
+            # Generate AI report using LangGraph
+            report = await langgraph_ai_service.generate_progress_report(user, habits_data)
             
             # Add metadata
             report.update({
@@ -153,9 +153,16 @@ class HeroReportView(APIView):
             # Get recent achievements and progress
             habits_data = self._gather_hero_data(user)
             
-            # Generate motivational message
+            # Generate motivational message using LangGraph
             context = f"User has {habits_data['active_habits']} active habits with {habits_data['completion_rate']:.1f}% completion rate"
-            motivational_message = ai_service.generate_motivational_message(user, context)
+            # Create a simple habits data structure for the LangGraph service
+            simple_habits_data = {
+                'total_habits': habits_data['active_habits'],
+                'overall_completion_rate': habits_data['completion_rate'],
+                'longest_streak': habits_data['longest_streak']
+            }
+            ai_report = await langgraph_ai_service.generate_progress_report(user, simple_habits_data)
+            motivational_message = ai_report.get('motivational_message', 'Keep building those amazing habits! 🚀')
             
             # Create hero report data
             hero_report = {
@@ -268,8 +275,16 @@ class AIInsightsView(APIView):
             # Gather habit-specific data
             habit_data = self._gather_single_habit_data(habit)
             
-            # Generate insights
-            insights = ai_service.generate_habit_insights(user, habit_data)
+            # Generate insights using LangGraph
+            # Convert habit_data to the format expected by LangGraph
+            habits_data_for_ai = {
+                'total_habits': 1,
+                'overall_completion_rate': habit_data['completion_rate'],
+                'longest_streak': habit_data['current_streak'],
+                'current_streaks': [habit_data['current_streak']]
+            }
+            ai_report = await langgraph_ai_service.generate_progress_report(user, habits_data_for_ai)
+            insights = ai_report.get('insights', [])
             
             response = {
                 'habit_id': str(habit.id),

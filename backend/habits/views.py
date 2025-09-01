@@ -229,7 +229,7 @@ class ProgressStatsView(APIView):
         
         # Calculate stats
         total_habits = habits.count()
-        active_streaks = sum(1 for habit in habits if habit.current_streak > 0)
+        active_streaks = sum(1 for habit in habits if habit.get_current_streak() > 0)
         total_checkins = all_checkins.filter(value=True).count()
         
         # Calculate adherence percentage (last 30 days)
@@ -242,8 +242,11 @@ class ProgressStatsView(APIView):
         week_expected = total_habits * 7 if total_habits > 0 else 1
         current_week_progress = min(100, (week_checkins / week_expected) * 100) if week_expected > 0 else 0
         
-        # Best streak
-        best_streak = max((habit.best_streak for habit in habits), default=0)
+        # Best streak (calculate from streak stats)
+        best_streak = 0
+        for habit in habits:
+            streak_stats = habit.get_streak_stats()
+            best_streak = max(best_streak, streak_stats['longest_streak'])
         
         # Habits completed today
         today_checkins = all_checkins.filter(date=today, value=True).count()

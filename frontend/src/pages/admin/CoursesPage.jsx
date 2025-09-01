@@ -20,7 +20,7 @@ export default function CoursesPage() {
   const fetchCourses = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/courses/`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -42,7 +42,7 @@ export default function CoursesPage() {
     e.preventDefault()
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/courses/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -64,7 +64,7 @@ export default function CoursesPage() {
 
   const handleUpdateVisibility = async (courseId, newVisibility) => {
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/courses/${courseId}/`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/admin/courses/${courseId}/`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
