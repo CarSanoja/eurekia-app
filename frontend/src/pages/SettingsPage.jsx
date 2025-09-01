@@ -1,8 +1,20 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { NotificationSettings } from '../components/settings/NotificationSettings';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../components/ui/card';
 
 export function SettingsPage() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to logout? Your progress is saved! 💾')) {
+      logout();
+      navigate('/login');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 p-4">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -15,6 +27,47 @@ export function SettingsPage() {
             Customize your hero journey experience! 🚀
           </p>
         </div>
+
+        {/* User Profile Card */}
+        <Card className="bg-gradient-to-r from-purple-100 to-pink-100 border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <span className="text-3xl">{user?.avatar_icon || '🦸'}</span>
+                Hero Profile
+              </span>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl font-medium transition-colors text-sm"
+              >
+                Logout
+              </button>
+            </CardTitle>
+            <CardDescription>
+              Your hero identity and journey details
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center py-2 border-b border-purple-200">
+                <span className="text-gray-600">Hero Name:</span>
+                <span className="font-bold text-purple-700">{user?.name || 'Unknown Hero'}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-purple-200">
+                <span className="text-gray-600">Email:</span>
+                <span className="font-medium text-purple-700">{user?.email || 'hero@example.com'}</span>
+              </div>
+              <div className="flex justify-between items-center py-2 border-b border-purple-200">
+                <span className="text-gray-600">Current Streak:</span>
+                <span className="font-bold text-orange-600">🔥 {user?.current_streak || 0} days</span>
+              </div>
+              <div className="flex justify-between items-center py-2">
+                <span className="text-gray-600">Badges Earned:</span>
+                <span className="font-bold text-yellow-600">🏆 {user?.badges_earned || 0}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Quick Stats */}
         <Card className="bg-gradient-to-r from-green-100 to-blue-100 border-0 shadow-lg">
@@ -81,7 +134,32 @@ export function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Developer Info for Demo */}
+        <Card className="bg-gray-100 border-0 shadow-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-gray-700">
+              🛠️ Demo Mode Info
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-gray-600">
+              You're currently in demo mode. All data is stored locally and will persist until you clear your browser storage.
+            </p>
+            <button
+              onClick={() => {
+                localStorage.clear();
+                window.location.reload();
+              }}
+              className="mt-3 px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg text-sm transition-colors"
+            >
+              Clear Local Data
+            </button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
 }
+
+export default SettingsPage;

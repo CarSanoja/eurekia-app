@@ -3,6 +3,22 @@ import { initializeAnalytics } from '../utils/analytics'
 
 const AuthContext = createContext()
 
+// Hardcoded demo user
+const DEMO_USER = {
+  id: 1,
+  email: 'demo@eurekia.com',
+  name: 'Demo Hero',
+  avatar_icon: '🦸',
+  avatar_color: 'bg-gradient-to-r from-purple-500 to-pink-500',
+  is_active: true,
+  created_at: new Date().toISOString(),
+  onboarding_completed: true,
+  habits_count: 3,
+  current_streak: 7,
+  total_checkins: 42,
+  badges_earned: 5
+}
+
 const authReducer = (state, action) => {
   switch (action.type) {
     case 'LOGIN_START':
@@ -17,6 +33,8 @@ const authReducer = (state, action) => {
       return { ...state, token: action.payload }
     case 'OTP_SENT':
       return { ...state, otpSent: true, loading: false }
+    case 'UPDATE_USER':
+      return { ...state, user: { ...state.user, ...action.payload } }
     default:
       return state
   }
@@ -35,81 +53,92 @@ export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
   useEffect(() => {
+    // Check if user has a token stored
     if (state.token) {
-      fetchUserProfile()
+      // Simulate fetching user profile with hardcoded data
+      setTimeout(() => {
+        dispatch({ type: 'LOGIN_SUCCESS', payload: DEMO_USER })
+        initializeAnalytics(DEMO_USER)
+      }, 500)
     }
   }, [state.token])
 
-  const fetchUserProfile = async () => {
-    try {
-      dispatch({ type: 'LOGIN_START' })
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/users/me/`, {
-        headers: {
-          'Authorization': `Bearer ${state.token}`,
-          'Content-Type': 'application/json'
-        }
-      })
-      
-      if (response.ok) {
-        const user = await response.json()
-        dispatch({ type: 'LOGIN_SUCCESS', payload: user })
-        // Initialize analytics when user is authenticated
-        initializeAnalytics(user)
-      } else {
-        localStorage.removeItem('eurekia_token')
-        dispatch({ type: 'LOGOUT' })
-      }
-    } catch (error) {
-      dispatch({ type: 'LOGIN_ERROR', payload: error.message })
-      localStorage.removeItem('eurekia_token')
-      dispatch({ type: 'LOGOUT' })
-    }
-  }
-
+  // Simplified login - accepts any email/password
   const joinUser = async (email, name) => {
     try {
       dispatch({ type: 'LOGIN_START' })
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/join/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, name })
-      })
       
-      const data = await response.json()
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
       
-      if (response.ok) {
-        localStorage.setItem('eurekia_token', data.token)
-        dispatch({ type: 'SET_TOKEN', payload: data.token })
-        dispatch({ type: 'LOGIN_SUCCESS', payload: data.user })
-        // Initialize analytics and track registration
-        initializeAnalytics(data.user)
-        return { success: true }
-      } else {
-        dispatch({ type: 'LOGIN_ERROR', payload: data.detail || 'Registration failed' })
-        return { success: false, error: data.detail }
+      // Always succeed with demo user
+      const user = {
+        ...DEMO_USER,
+        email: email || DEMO_USER.email,
+        name: name || DEMO_USER.name,
+        avatar_icon: '',  // Will be set during onboarding
+        onboarding_completed: false
       }
+      
+      const token = 'demo_token_' + Date.now()
+      
+      localStorage.setItem('eurekia_token', token)
+      dispatch({ type: 'SET_TOKEN', payload: token })
+      dispatch({ type: 'LOGIN_SUCCESS', payload: user })
+      initializeAnalytics(user)
+      
+      return { success: true }
     } catch (error) {
       dispatch({ type: 'LOGIN_ERROR', payload: error.message })
       return { success: false, error: error.message }
     }
   }
 
+  // Simplified OTP request - always succeeds
   const requestOTP = async (email) => {
     try {
       dispatch({ type: 'LOGIN_START' })
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/otp/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      })
       
-      if (response.ok) {
-        dispatch({ type: 'OTP_SENT' })
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 800))
+      
+      dispatch({ type: 'OTP_SENT' })
+      console.log('Demo Mode: OTP would be sent to', email)
+      console.log('Demo Mode: Use any 6-digit code to login')
+      
+      return { success: true }
+    } catch (error) {
+      dispatch({ type: 'LOGIN_ERROR', payload: error.message })
+      return { success: false, error: error.message }
+    }
+  }
+
+  // Simplified OTP verification - accepts any 6-digit code
+  const verifyOTP = async (email, code) => {
+    try {
+      dispatch({ type: 'LOGIN_START' })
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      // Accept any 6-digit code
+      if (code && code.length === 6) {
+        const user = {
+          ...DEMO_USER,
+          email: email || DEMO_USER.email
+        }
+        
+        const token = 'demo_token_' + Date.now()
+        
+        localStorage.setItem('eurekia_token', token)
+        dispatch({ type: 'SET_TOKEN', payload: token })
+        dispatch({ type: 'LOGIN_SUCCESS', payload: user })
+        initializeAnalytics(user)
+        
         return { success: true }
       } else {
-        const data = await response.json()
-        dispatch({ type: 'LOGIN_ERROR', payload: data.detail || 'Failed to send OTP' })
-        return { success: false, error: data.detail }
+        dispatch({ type: 'LOGIN_ERROR', payload: 'Please enter a 6-digit code' })
+        return { success: false, error: 'Please enter a 6-digit code' }
       }
     } catch (error) {
       dispatch({ type: 'LOGIN_ERROR', payload: error.message })
@@ -117,37 +146,23 @@ export function AuthProvider({ children }) {
     }
   }
 
-  const verifyOTP = async (email, code) => {
-    try {
-      dispatch({ type: 'LOGIN_START' })
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/verify/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code })
-      })
-      
-      const data = await response.json()
-      
-      if (response.ok) {
-        localStorage.setItem('eurekia_token', data.token)
-        dispatch({ type: 'SET_TOKEN', payload: data.token })
-        dispatch({ type: 'LOGIN_SUCCESS', payload: data.user })
-        // Initialize analytics and track login
-        initializeAnalytics(data.user)
-        return { success: true }
-      } else {
-        dispatch({ type: 'LOGIN_ERROR', payload: data.detail || 'OTP verification failed' })
-        return { success: false, error: data.detail }
-      }
-    } catch (error) {
-      dispatch({ type: 'LOGIN_ERROR', payload: error.message })
-      return { success: false, error: error.message }
+  // Update user profile (for onboarding)
+  const updateUser = (updates) => {
+    const updatedUser = { ...state.user, ...updates }
+    dispatch({ type: 'UPDATE_USER', payload: updates })
+    
+    // If onboarding is completed, mark it
+    if (updates.avatar_icon && updates.mission) {
+      dispatch({ type: 'UPDATE_USER', payload: { onboarding_completed: true } })
     }
+    
+    return updatedUser
   }
 
   const logout = () => {
     localStorage.removeItem('eurekia_token')
     dispatch({ type: 'LOGOUT' })
+    console.log('Logged out successfully')
   }
 
   const value = {
@@ -155,7 +170,8 @@ export function AuthProvider({ children }) {
     joinUser,
     requestOTP,
     verifyOTP,
-    logout
+    logout,
+    updateUser
   }
 
   return (
