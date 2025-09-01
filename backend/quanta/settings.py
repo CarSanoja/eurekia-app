@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'reports',
     'messaging',
     'admin_studio',
+    'analytics',
 ]
 
 MIDDLEWARE = [
