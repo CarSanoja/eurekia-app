@@ -8,7 +8,7 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://23.22.233.226/api/$1"
+      "dest": "http://23.22.233.226/api/$1"
     },
     {
       "src": "/(.*)",
@@ -27,8 +27,8 @@
     }
   ],
   "env": {
-    "VITE_API_URL": "https://23.22.233.226/api",
-    "VITE_WS_URL": "wss://23.22.233.226/ws",
+    "VITE_API_URL": "http://23.22.233.226/api",
+    "VITE_WS_URL": "ws://23.22.233.226/ws",
     "VITE_APP_NAME": "Eurekia Quanta",
     "VITE_APP_VERSION": "1.0.0"
   },

@@ -53,13 +53,17 @@ SECURE_HSTS_SECONDS = 31536000
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 SECURE_HSTS_PRELOAD = True
 
-# Force HTTPS in production
-USE_TLS = True
+# SSL settings (disabled for HTTP deployment)
+USE_TLS = os.environ.get('USE_TLS', 'False').lower() == 'true'
 if USE_TLS:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     SECURE_SSL_REDIRECT = True
     SESSION_COOKIE_SECURE = True
     CSRF_COOKIE_SECURE = True
+else:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
 
 # Static files configuration for production
 STATIC_URL = '/static/'
