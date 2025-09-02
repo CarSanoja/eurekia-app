@@ -1,5 +1,6 @@
 import { createContext, useContext, useReducer, useEffect } from 'react'
 import { initializeAnalytics } from '../utils/analytics'
+import authService from '../services/auth'
 
 const AuthContext = createContext()
 
@@ -55,44 +56,77 @@ export function AuthProvider({ children }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
 
   useEffect(() => {
-    // Check if user has a token stored
-    if (state.token) {
-      // Simulate fetching user profile with hardcoded data
-      setTimeout(() => {
+    const initializeAuth = async () => {
+      try {
+        dispatch({ type: 'LOGIN_START' })
+        
+        // Try to initialize authentication (checks existing token or auto-login)
+        const result = await authService.init()
+        
+        if (result.success) {
+          dispatch({ type: 'LOGIN_SUCCESS', payload: result.user })
+          dispatch({ type: 'SET_TOKEN', payload: localStorage.getItem('eurekia_token') })
+          initializeAnalytics(result.user)
+        } else {
+          // Fallback to demo user if API fails
+          console.warn('API auth failed, using demo mode:', result.error)
+          const token = 'demo_token_' + Date.now()
+          localStorage.setItem('eurekia_token', token)
+          dispatch({ type: 'SET_TOKEN', payload: token })
+          dispatch({ type: 'LOGIN_SUCCESS', payload: DEMO_USER })
+          initializeAnalytics(DEMO_USER)
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+        // Fallback to demo mode
+        const token = 'demo_token_' + Date.now()
+        localStorage.setItem('eurekia_token', token)
+        dispatch({ type: 'SET_TOKEN', payload: token })
         dispatch({ type: 'LOGIN_SUCCESS', payload: DEMO_USER })
         initializeAnalytics(DEMO_USER)
-      }, 500)
+      }
     }
-  }, [state.token])
 
-  // Simplified login - accepts any email/password
+    if (!state.isAuthenticated) {
+      initializeAuth()
+    }
+  }, [])
+
+  // Try real API login, fallback to demo mode
   const joinUser = async (email, name) => {
     try {
       dispatch({ type: 'LOGIN_START' })
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Try API authentication first
+      const result = await authService.autoLogin()
       
-      // Create user based on email - admin users keep admin privileges
-      const isAdmin = email === 'admin@eurekia.com'
-      const user = {
-        ...DEMO_USER,
-        email: email || DEMO_USER.email,
-        name: name || DEMO_USER.name,
-        avatar_icon: isAdmin ? '🔧' : '',  // Admin keeps icon, others set during onboarding
-        onboarding_completed: isAdmin ? true : false,  // Admin skips onboarding
-        is_staff: isAdmin ? true : false,
-        is_superuser: isAdmin ? true : false
+      if (result.success) {
+        dispatch({ type: 'LOGIN_SUCCESS', payload: result.user })
+        dispatch({ type: 'SET_TOKEN', payload: result.token })
+        initializeAnalytics(result.user)
+        return { success: true }
+      } else {
+        // Fallback to demo mode
+        console.warn('API login failed, using demo mode')
+        const isAdmin = email === 'admin@eurekia.com'
+        const user = {
+          ...DEMO_USER,
+          email: email || DEMO_USER.email,
+          name: name || DEMO_USER.name,
+          avatar_icon: isAdmin ? '🔧' : '',
+          onboarding_completed: isAdmin ? true : false,
+          is_staff: isAdmin ? true : false,
+          is_superuser: isAdmin ? true : false
+        }
+        
+        const token = 'demo_token_' + Date.now()
+        localStorage.setItem('eurekia_token', token)
+        dispatch({ type: 'SET_TOKEN', payload: token })
+        dispatch({ type: 'LOGIN_SUCCESS', payload: user })
+        initializeAnalytics(user)
+        
+        return { success: true }
       }
-      
-      const token = 'demo_token_' + Date.now()
-      
-      localStorage.setItem('eurekia_token', token)
-      dispatch({ type: 'SET_TOKEN', payload: token })
-      dispatch({ type: 'LOGIN_SUCCESS', payload: user })
-      initializeAnalytics(user)
-      
-      return { success: true }
     } catch (error) {
       dispatch({ type: 'LOGIN_ERROR', payload: error.message })
       return { success: false, error: error.message }
