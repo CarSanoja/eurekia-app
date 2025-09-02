@@ -4,6 +4,7 @@ Optimized for Railway deployment
 """
 import os
 import dj_database_url
+from datetime import timedelta
 from .base import *
 
 # SECURITY WARNING: don't run with debug turned on in production!
@@ -170,6 +171,9 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me-in-production')
 
 # Django REST Framework production settings
 REST_FRAMEWORK.update({
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
     ],
@@ -182,6 +186,18 @@ REST_FRAMEWORK.update({
         'user': '1000/hour'
     }
 })
+
+# JWT settings for production
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=2),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
 
 # Celery production settings
 CELERY_TASK_ALWAYS_EAGER = False
