@@ -5,16 +5,13 @@
   "outputDirectory": "frontend/dist",
   "installCommand": "cd frontend && npm install",
   "framework": "vite",
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "https://eurekia.somosquanta.com/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
+      "source": "/api/(.*)",
+      "destination": "https://eurekia.somosquanta.com/api/$1"
     }
   ],
+  "cleanUrls": true,
   "headers": [
     {
       "source": "/api/(.*)",
