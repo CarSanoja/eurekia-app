@@ -9,6 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError
 from drf_spectacular.utils import extend_schema
 import random
 import string
@@ -198,3 +199,32 @@ class SimplifiedLoginView(APIView):
             {'detail': 'Invalid credentials'}, 
             status=status.HTTP_401_UNAUTHORIZED
         )
+
+
+class TokenRefreshView(APIView):
+    """Token refresh endpoint"""
+    permission_classes = [AllowAny]
+    
+    @extend_schema(
+        request={'type': 'object', 'properties': {'refresh': {'type': 'string'}}},
+        responses={200: {'type': 'object'}}
+    )
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        
+        if not refresh_token:
+            return Response(
+                {'detail': 'Refresh token is required'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        try:
+            refresh = RefreshToken(refresh_token)
+            return Response({
+                'access': str(refresh.access_token)
+            })
+        except TokenError:
+            return Response(
+                {'detail': 'Invalid or expired refresh token'}, 
+                status=status.HTTP_401_UNAUTHORIZED
+            )

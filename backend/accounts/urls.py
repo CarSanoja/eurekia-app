@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('auth/login/', views.SimplifiedLoginView.as_view(), name='auth-login'),
+    path('auth/token/refresh/', views.TokenRefreshView.as_view(), name='auth-token-refresh'),
     path('auth/join/', views.JoinView.as_view(), name='auth-join'),
     path('auth/otp/', views.RequestOTPView.as_view(), name='auth-otp'),
     path('auth/verify/', views.VerifyOTPView.as_view(), name='auth-verify'),
